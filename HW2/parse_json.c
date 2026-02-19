@@ -2,9 +2,20 @@
 #include <stdlib.h>
 #include "cJSON.h"
 
-void parse_json(char *content)
+char* get_content(FILE *fp);
+cJSON *get_field(cJSON *from, int steps);
+cJSON *show_field(cJSON *from, int steps);
+cJSON *get_0child(cJSON * field);
+cJSON *get_root(FILE *fp);
+
+int main (int argc, char** argv)
 {
-    cJSON *root = get_root(content);
+    if (argc != 2) {
+        printf("usage: %s json_file_name\n", argv[0]);
+        return 9;
+    }
+    FILE *fp = fopen(argv[1], "rb");
+    cJSON *root = get_root(fp);
     cJSON *field;
     field = get_0child(root->child); 
     field = show_field(field, 4);
@@ -15,10 +26,13 @@ void parse_json(char *content)
     field = show_field(field, 1);
 
     cJSON_Delete(root);
+    return 0;
+
 }
 
-cJSON *get_root(char *total)
+cJSON *get_root(FILE *fp)
 {
+    char *total = get_content(fp);
     cJSON *root = cJSON_Parse(total);
     free(total);
     if (root == NULL) {
