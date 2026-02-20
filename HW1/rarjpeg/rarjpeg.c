@@ -10,8 +10,8 @@
 #define LOCAL_FILE_HEADER_SIGNATURE 0x04034b50
 #define SHORT_FILE_LEN 4L
 
-#pragma pack
 
+#pragma pack(push,1)
 struct CDFH {
     uint32_t signature;
     uint16_t versionMadeBy;
@@ -31,7 +31,8 @@ struct CDFH {
     uint32_t externalFileAttributes;
     uint32_t localFileHeaderOffset;
 };
-
+#pragma pack(pop)
+#pragma pack(push,1)
 struct EOCD {
     uint16_t diskNumber;
     uint16_t startDiskNumber;
@@ -41,6 +42,7 @@ struct EOCD {
     uint32_t centralDirectoryOffset;
     uint16_t commentLength;
 };
+#pragma pack(pop)
 
 long eocd_offset(FILE *fp);
 bool is_jpeg_begun(FILE *fp);
