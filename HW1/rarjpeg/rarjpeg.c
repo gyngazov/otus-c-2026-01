@@ -119,6 +119,7 @@ void collect_file_names(FILE *fp, long eocd_offset, long jpeg_offset)
     fread((char *) eocd, 1, sizeof(struct EOCD), fp);
     uint16_t ncdr = eocd->numberCentralDirectoryRecord;
     uint32_t cdo = eocd->centralDirectoryOffset;
+    free(eocd);
     // jpeg_offset надо отмотать до начала zip
     fseek(fp, jpeg_offset + cdo, SEEK_SET);
     printf("Список файлов архива:\n");
@@ -137,6 +138,7 @@ void get_file_name(FILE *fp)
     uint16_t file_len = cdfh->filenameLength;
     uint16_t extra_len = cdfh->extraFieldLength;
     uint16_t comm_len = cdfh->fileCommentLength;
+    free(cdfh);
     if (file_len) {
         char file_name[file_len];
         fread(file_name, 1, file_len, fp);
