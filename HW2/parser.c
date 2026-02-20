@@ -1,6 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "cJSON.h"
+#include "parser.h"
+
+static cJSON *get_root(char *total);
+static cJSON *get_0child(cJSON * field);
+static cJSON *show_field(cJSON *from, int steps);
+static cJSON *get_field(cJSON *from, int steps);
 
 void parse_json(char *content)
 {
@@ -17,7 +23,7 @@ void parse_json(char *content)
     cJSON_Delete(root);
 }
 
-cJSON *get_root(char *total)
+static cJSON *get_root(char *total)
 {
     cJSON *root = cJSON_Parse(total);
     free(total);
@@ -32,12 +38,12 @@ cJSON *get_root(char *total)
     return root;
 }
 
-cJSON *get_0child(cJSON * field)
+static cJSON *get_0child(cJSON * field)
 {
     return cJSON_GetArrayItem(field, 0)->child;
 }
 
-cJSON *show_field(cJSON *from, int steps)
+static cJSON *show_field(cJSON *from, int steps)
 {
     cJSON *field;
     field = get_field(from, steps);
@@ -45,22 +51,10 @@ cJSON *show_field(cJSON *from, int steps)
     return field;
 }
 
-cJSON *get_field(cJSON *from, int steps)
+static cJSON *get_field(cJSON *from, int steps)
 {
     cJSON *field;
     for (field = from; field != NULL && steps > 0; steps--)
         field = field->next;
     return field;
-}
-
-char* get_content(FILE *fp)
-{
-    fseek(fp, 0, SEEK_END);
-    long fsize = ftell(fp);
-    char *total = malloc(fsize + 1);
-    fseek(fp, 0, SEEK_SET);
-    fread(total, fsize, 1, fp);
-    fclose(fp);
-    total[fsize] = 0;
-    return total;
 }
