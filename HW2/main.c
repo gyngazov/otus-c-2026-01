@@ -20,8 +20,8 @@ int main(int argc, char** argv)
     char url[len];
 	set_url(url, city);
     char *resp_body = get_weather(url);
+    printf("city: %s\n", city);
     parse_json(resp_body);
-    free(resp_body);
     return 0;
 }
 
