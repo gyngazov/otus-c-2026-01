@@ -21,7 +21,7 @@ int main(int argc, char** argv)
 	set_url(url, city);
     struct MemoryStruct *chunk;
     get_weather(url, chunk);
-    printf("city: %s\n", city);
+    printf("Current weather\ncity: %s\n", city);
     parse_json(chunk->memory);
     free(chunk);
     return 0;
