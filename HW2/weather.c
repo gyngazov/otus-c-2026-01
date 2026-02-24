@@ -20,7 +20,7 @@ static size_t write_cb(void *contents, size_t size, size_t nmemb, void *userp)
 }
 
 /*
- * Получение курлом ответа на http-запрос текстом.
+ * Получение курлом ответа на http-запрос.
  * */
 char *get_weather(char *url)
 {
@@ -36,6 +36,10 @@ char *get_weather(char *url)
     }
 
     chunk.memory = malloc(1);
+    if(chunk.memory == NULL) {
+        printf("not enough memory\n");
+	exit(17);
+    }
     chunk.size = 0;   
 
     curl = curl_easy_init();
@@ -50,8 +54,7 @@ char *get_weather(char *url)
         fprintf(stderr, "curl_easy_perform() failed: %s\n",
               curl_easy_strerror(result));
         exit(17);
-    } else 
-        fwrite(chunk.memory, 1, chunk.size, stdout);
+    } 
     curl_easy_cleanup(curl);
     curl_global_cleanup();
     return chunk.memory;
