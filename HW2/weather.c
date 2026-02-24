@@ -5,49 +5,49 @@
 
 static size_t write_cb(void *contents, size_t size, size_t nmemb, void *userp)
 {
-  size_t realsize = size * nmemb;
-  struct MemoryStruct *mem = (struct MemoryStruct *)userp;
-  char *ptr = realloc(mem->memory, mem->size + realsize + 1);
-  if(!ptr) {
+	size_t realsize = size * nmemb;
+  	struct MemoryStruct *mem = (struct MemoryStruct *)userp;
+  	char *ptr = realloc(mem->memory, mem->size + realsize + 1);
+  	if (!ptr) {
     printf("not enough memory (realloc returned NULL)\n");
     return 0;
-  }
-  mem->memory = ptr;
-  memcpy(&(mem->memory[mem->size]), contents, realsize);
-  mem->size += realsize;
-  mem->memory[mem->size] = 0;
-  return realsize;
+  	}
+  	mem->memory = ptr;
+  	memcpy(&(mem->memory[mem->size]), contents, realsize);
+  	mem->size += realsize;
+  	mem->memory[mem->size] = 0;
+  	return realsize;
 }
 
 /*
  * Получение курлом ответа на http-запрос.
  * */
-void get_weather(char *url, struct MemoryStruct *chunk)
+char *get_weather(char *url)
 {
     CURL *curl;
     CURLcode result;
-
-//    struct MemoryStruct *chunk;
+    struct MemoryStruct chunk;
 
     result = curl_global_init(CURL_GLOBAL_ALL);
     if (result != CURLE_OK) {
         printf("Ошибка инициализации curl.\n)");
         exit(17);
     }
-/*
-    chunk->memory = malloc(1);
-    if(chunk->memory == NULL) {
+
+    chunk.memory = malloc(1);
+    if(chunk.memory == NULL) {
         printf("not enough memory\n");
 	    exit(17);
     }
-    chunk->size = 0;   
-*/
+    chunk.size = 0;   
+
     curl = curl_easy_init();
     if (curl) {
         curl_easy_setopt(curl, CURLOPT_URL, url);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_cb);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *) chunk);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *) &chunk);
         curl_easy_setopt(curl, CURLOPT_USERAGENT, AGENT);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, TIME_OUT);
         result = curl_easy_perform(curl);
     }
     if (result != CURLE_OK) {
@@ -57,4 +57,5 @@ void get_weather(char *url, struct MemoryStruct *chunk)
     } 
     curl_easy_cleanup(curl);
     curl_global_cleanup();
+	return chunk.memory;
 }

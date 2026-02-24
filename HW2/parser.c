@@ -26,7 +26,6 @@ void parse_json(char *content)
 static cJSON *get_root(char *total)
 {
     cJSON *root = cJSON_Parse(total);
-    free(total);
     if (root == NULL) {
         const char *error_ptr = cJSON_GetErrorPtr();
         if (error_ptr != NULL) {

@@ -19,21 +19,10 @@ int main(int argc, char** argv)
 	int len = sizeof(SITE) + sizeof(city) + sizeof(FORMAT) - 2;
     char url[len];
 	set_url(url, city);
-    struct MemoryStruct *chunk;
-    chunk = (struct MemoryStruct *) malloc(sizeof(struct MemoryStruct));
-
-    chunk->memory = malloc(1);
-    if(chunk->memory == NULL) {
-        printf("not enough memory\n");
-        exit(17);
-    }
-    chunk->size = 0;
-
-    get_weather(url, chunk);
+    char *resp_body = get_weather(url);
     printf("Current weather\ncity: %s\n", city);
-    parse_json(chunk->memory);
-    free(chunk->memory);
-    free(chunk);
+    parse_json(resp_body);
+	free(resp_body);
     return 0;
 }
 

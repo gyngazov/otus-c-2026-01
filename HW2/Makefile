@@ -10,4 +10,4 @@ ${TARGET}: ${OBJS}
 	gcc -o ${TARGET} $^ ${LFLAGS}
 
 clean:
-	rm -f ${OBJS}
+	rm -f ${OBJS} ${TARGET}

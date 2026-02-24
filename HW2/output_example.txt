@@ -1,0 +1,7 @@
+Current weather
+city: moscow
+localObsDateTime: 2026-02-24 05:00 PM
+temp_C: -4
+weatherDesc: Snow, heavy snow shower
+winddirDegree: 97
+windspeedKmph: 15
