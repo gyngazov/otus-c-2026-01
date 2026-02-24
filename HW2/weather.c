@@ -38,7 +38,7 @@ char *get_weather(char *url)
     chunk.memory = malloc(1);
     if(chunk.memory == NULL) {
         printf("not enough memory\n");
-	exit(17);
+	    exit(17);
     }
     chunk.size = 0;   
 

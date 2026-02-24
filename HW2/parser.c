@@ -7,7 +7,7 @@ static cJSON *get_root(char *total);
 static cJSON *get_0child(cJSON * field);
 static cJSON *show_field(cJSON *from, int steps);
 static cJSON *get_field(cJSON *from, int steps);
-
+// печатать некторую группу строковых полей 
 void parse_json(char *content)
 {
     cJSON *root = get_root(content);
@@ -22,7 +22,7 @@ void parse_json(char *content)
 
     cJSON_Delete(root);
 }
-
+// найти корень в строке с json-ом
 static cJSON *get_root(char *total)
 {
     cJSON *root = cJSON_Parse(total);
@@ -37,12 +37,12 @@ static cJSON *get_root(char *total)
     }
     return root;
 }
-
+// первое поле первого элемента списка
 static cJSON *get_0child(cJSON * field)
 {
     return cJSON_GetArrayItem(field, 0)->child;
 }
-
+// печатать название_поля->строка_поля в steps шагах от from
 static cJSON *show_field(cJSON *from, int steps)
 {
     cJSON *field;
@@ -50,7 +50,7 @@ static cJSON *show_field(cJSON *from, int steps)
     printf("%s: %s\n", field->string, cJSON_GetStringValue(field));
     return field;
 }
-
+// найти поле в steps шагах от поля from
 static cJSON *get_field(cJSON *from, int steps)
 {
     cJSON *field;
