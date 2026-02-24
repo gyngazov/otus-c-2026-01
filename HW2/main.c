@@ -19,9 +19,11 @@ int main(int argc, char** argv)
 	int len = sizeof(SITE) + sizeof(city) + sizeof(FORMAT) - 2;
     char url[len];
 	set_url(url, city);
-    char *resp_body = get_weather(url);
+//    char *resp_body 
+    struct MemoryStruct *chunk = get_weather(url);
     printf("city: %s\n", city);
-    parse_json(resp_body);
+    parse_json(chunk->memory);
+    free(chunk);
     return 0;
 }
 
