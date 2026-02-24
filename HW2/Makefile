@@ -8,4 +8,6 @@ OBJS=cJSON.o parser.o weather.o main.o
 
 ${TARGET}: ${OBJS}
 	gcc -o ${TARGET} $^ ${LFLAGS}
-	
+
+clean:
+	rm -f ${OBJS}

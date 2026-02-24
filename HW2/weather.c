@@ -31,17 +31,17 @@ void get_weather(char *url, struct MemoryStruct *chunk)
 
     result = curl_global_init(CURL_GLOBAL_ALL);
     if (result != CURLE_OK) {
-        printf("Результат не %s\n", CURLE_OK);
+        printf("Ошибка инициализации curl.\n)");
         exit(17);
     }
-
+/*
     chunk->memory = malloc(1);
     if(chunk->memory == NULL) {
         printf("not enough memory\n");
 	    exit(17);
     }
     chunk->size = 0;   
-
+*/
     curl = curl_easy_init();
     if (curl) {
         curl_easy_setopt(curl, CURLOPT_URL, url);

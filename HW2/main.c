@@ -20,16 +20,26 @@ int main(int argc, char** argv)
     char url[len];
 	set_url(url, city);
     struct MemoryStruct *chunk;
+    chunk = (struct MemoryStruct *) malloc(sizeof(struct MemoryStruct));
+
+    chunk->memory = malloc(1);
+    if(chunk->memory == NULL) {
+        printf("not enough memory\n");
+        exit(17);
+    }
+    chunk->size = 0;
+
     get_weather(url, chunk);
     printf("Current weather\ncity: %s\n", city);
     parse_json(chunk->memory);
+    free(chunk->memory);
     free(chunk);
     return 0;
 }
 
 void set_url(char *url, char *city)
 {
-	strncat(url, SITE, sizeof(SITE));
-	strncat(url, city, sizeof(city));
-	strncat(url, FORMAT, sizeof(FORMAT));
+	strncat(url, SITE, strlen(SITE) + 1);
+	strncat(url, city, strlen(city) + 1);
+	strncat(url, FORMAT, strlen(FORMAT) + 1);
 }
