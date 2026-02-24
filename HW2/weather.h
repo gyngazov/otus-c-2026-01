@@ -7,4 +7,4 @@ struct MemoryStruct {
   size_t size;
 };
 
-struct MemoryStruct *get_weather(char *url);
+void get_weather(char *url, struct MemoryStruct *chunk);

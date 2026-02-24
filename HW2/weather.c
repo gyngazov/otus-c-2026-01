@@ -22,12 +22,12 @@ static size_t write_cb(void *contents, size_t size, size_t nmemb, void *userp)
 /*
  * Получение курлом ответа на http-запрос.
  * */
-struct MemoryStruct *get_weather(char *url)
+void get_weather(char *url, struct MemoryStruct *chunk)
 {
     CURL *curl;
     CURLcode result;
 
-    struct MemoryStruct *chunk;
+//    struct MemoryStruct *chunk;
 
     result = curl_global_init(CURL_GLOBAL_ALL);
     if (result != CURLE_OK) {
@@ -57,5 +57,4 @@ struct MemoryStruct *get_weather(char *url)
     } 
     curl_easy_cleanup(curl);
     curl_global_cleanup();
-    return chunk;
 }
