@@ -1,0 +1,55 @@
+configure: Configured to build curl/libcurl:
+
+  Host setup:       x86_64-pc-linux-gnu
+  Install prefix:   /usr/local
+  Compiler:         gcc
+   CFLAGS:          -Werror-implicit-function-declaration -O2 -Wno-system-headers
+   CFLAGS extras:   
+   CPPFLAGS:        -D_GNU_SOURCE
+   LDFLAGS:         
+     curl-config:   
+   LIBS:            -lssl -lcrypto -lssl -lcrypto
+
+  curl version:     8.18.0
+  SSL:              enabled (OpenSSL)
+  SSH:              no       (--with-{libssh,libssh2})
+  zlib:             no       (--with-zlib)
+  brotli:           no       (--with-brotli)
+  zstd:             no       (--with-zstd)
+  GSS-API:          no       (--with-gssapi)
+  GSASL:            no       (--with-gsasl)
+  TLS-SRP:          enabled
+  resolver:         POSIX threaded
+  IPv6:             no       (--enable-ipv6)
+  Unix sockets:     no       (--enable-unix-sockets)
+  IDN:              no       (--with-{libidn2,winidn})
+  Build docs:       enabled  (--disable-docs)
+  Build libcurl:    Shared=yes, Static=yes
+  Built-in manual:  enabled
+  --libcurl option: enabled  (--disable-libcurl-option)
+  Type checking:    enabled  (--disable-typecheck)
+  Verbose errors:   enabled  (--disable-verbose)
+  Code coverage:    disabled
+  SSPI:             no       (--enable-sspi)
+  ca native:        no
+  ca cert bundle:   /etc/ssl/certs/ca-certificates.crt
+  ca cert path:     /etc/ssl/certs
+  ca cert embed:    no
+  ca fallback:      no
+  LDAP:             no       (--enable-ldap / --with-ldap-lib / --with-lber-lib)
+  LDAPS:            no       (--enable-ldaps)
+  IPFS/IPNS:        no       (--enable-ipfs)
+  RTSP:             no       (--enable-rtsp)
+  RTMP:             no       (--with-librtmp)
+  PSL:              no       (--with-libpsl)
+  Alt-svc:          enabled  (--disable-alt-svc)
+  Headers API:      enabled  (--disable-headers-api)
+  HSTS:             enabled  (--disable-hsts)
+  HTTP1:            enabled  (internal)
+  HTTP2:            no       (--with-nghttp2)
+  HTTP3:            no       (--with-ngtcp2 --with-nghttp3, --with-quiche, --with-openssl-quic)
+  ECH:              no      (--enable-ech)
+  HTTPS RR:         no      (--enable-httpsrr)
+  SSLS-EXPORT:      no      (--enable-ssls-export)
+  Protocols:        http https telnet
+  Features:         alt-svc AsynchDNS HSTS HTTPS-proxy Largefile SSL threadsafe TLS-SRP

@@ -1,0 +1,2 @@
+#!/bin/bash 
+./configure  --disable-file --disable-ipfs --disable-ldap --disable-ldaps --disable-rtsp --disable-tftp --disable-pop3 --disable-imap --disable-smb --disable-smtp --disable-gopher --disable-mqtt --disable-ipv6 --disable-ntlm --disable-unix-sockets --disable-socketpair --disable-mime --disable-websockets --with-openssl --without-libpsl --without-ldap --disable-dict --disable-ftp
