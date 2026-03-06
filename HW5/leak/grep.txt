@@ -1,0 +1,11 @@
+grep 'clib-.*\.c' vlg.log|awk '{print $4" "$5}'|sort|uniq
+clib_package_install (clib-package.c:1383)
+clib_package_install (clib-package.c:1579)
+clib_package_install_dependencies (clib-package.c:1615)
+clib_package_new_from_slug (clib-package.c:796)
+clib_package_new_from_slug_with_package_name (clib-package.c:660)
+fetch_package_file_thread (clib-package.c:1001)
+fetch_package_file_thread (clib-package.c:999)
+fetch_package_file_work (clib-package.c:953)
+install_packages (clib-package.c:370)
+install_packages (clib-package.c:374)
