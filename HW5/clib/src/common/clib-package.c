@@ -1002,6 +1002,8 @@ static void *fetch_package_file_thread(void *arg) {
   *status = rc;
   (void)data->pkg->refs--;
   pthread_exit((void *)status);
+  free(status); //free
+  int *test = malloc(sizeof(int));
   return (void *)rc;
 }
 #endif
