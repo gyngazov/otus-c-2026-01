@@ -366,7 +366,6 @@ int main(int argc, char *argv[]) {
   if (opts.prefix) {
     setenv("CLIB_PREFIX", opts.prefix, 1);
     setenv("PREFIX", opts.prefix, 1);
-    free(opts.prefix);
   }
 
   setenv("CLIB_FORCE", "1", 1);
