@@ -1,7 +1,13 @@
 #include <stdio.h>
 #include <pthread.h>
 
-#define LOG_FILE "file.log"
+#define LOG_FILE        "file.log"
+#define ERROR_OPEN      -100
+#define ERROR_INIT      -99
+#define ERROR_CREATE    -98
+#define ERROR_JOIN      -97
+#define ERROR_WRITE     -96
+#define ERROR_NOMEM     -95
 
 struct Log_handler {
     FILE *log_file;
@@ -9,6 +15,9 @@ struct Log_handler {
 };
 
 struct Log_handler *logger;
-
+// создать logger
 void init_logger();
-void write_log(char *msg);
+// выгрузить логгер
+void close_logger();
+//void append_log(char *msg);
+void append_log(int thread, int i);

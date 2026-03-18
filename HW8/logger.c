@@ -3,38 +3,63 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 void init_logger()
 {
     FILE *fp;
     fp = fopen(LOG_FILE, "a");
-    if (fp == NULL) {
-        printf("error opening log\n");
-        exit(-1);
-    }
+    if (fp == NULL)
+        exit(errno);
     pthread_mutex_t mutex;
-    pthread_mutex_init(&mutex, NULL);
+    int ret = pthread_mutex_init(&mutex, NULL);
+    if (ret != 0)
+        exit(ret);
     logger = (struct Log_handler *) malloc(sizeof(struct Log_handler));
-    if (logger == NULL) {
-        printf("no mem\n");
-        exit(-2);
-    }
+    if (logger == NULL)
+        exit(ERROR_INIT);
     logger->log_file = fp;
     logger->log_mutex = mutex;
 }
 
-static void *add_log(void *message)
+void close_logger()
 {
+    if (fclose(logger->log_file) != 0)
+        exit(errno);
     pthread_mutex_t mutex = logger->log_mutex;
-    pthread_mutex_lock(&mutex);
-    char *msg = (char *) message;
-    fwrite(msg, 1, strlen(msg) + 1, logger->log_file);
-    pthread_mutex_unlock(&mutex);
+    int ret = pthread_mutex_destroy(&mutex);
+    if (ret != 0)
+        exit(ret);
 }
 
-void write_log(char *msg)
+static char *get_date_time()
 {
-    pthread_t tid;
-    pthread_create(&tid, NULL, add_log, msg); 
-    pthread_join(tid, NULL);   
+    time_t now;
+    struct tm *timeinfo;
+    time(&now);
+    timeinfo = localtime(&now);
+    char *template = "%d-%02d-%02d %02d:%02d:%02d";
+    char *output = (char *) malloc(sizeof(template) + 1);
+    if (output == NULL)
+        exit(ERROR_NOMEM);
+    sprintf(output, template, timeinfo->tm_year + 1900, timeinfo->tm_mon + 1,
+            timeinfo->tm_mday, timeinfo->tm_hour,
+            timeinfo->tm_min, timeinfo->tm_sec);
+    return output;
+}
+
+void append_log(int thread, int i)
+{
+    pthread_mutex_t mutex = logger->log_mutex;
+    int ret = pthread_mutex_lock(&mutex);
+    if (ret != 0)
+        exit(ret);
+    char *datetime = get_date_time();
+    ret = fprintf(logger->log_file, "%s [thread-%ld] string: %d\n", datetime, pthread_self(), i);
+    free(datetime);
+    if (ret < 0) 
+        exit(ERROR_WRITE);
+    ret = pthread_mutex_unlock(&mutex);
+    if (ret != 0)
+        exit(ret);
 }
