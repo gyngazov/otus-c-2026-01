@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <execinfo.h>
 
 void init_logger()
 {
@@ -48,6 +49,20 @@ static char *get_date_time()
     return output;
 }
 
+static void trace()
+{
+    void *buffer[STACK_BUF_LEN];
+    char **strings;
+
+    int nptrs = backtrace(buffer, STACK_BUF_LEN);
+    strings = backtrace_symbols(buffer, nptrs);
+    if (strings == NULL)
+        exit(ERROR_NOSTACK);
+    for (int j = 0; j < nptrs; j++)
+        fprintf(logger->log_file, "%s\n", strings[j]);
+    free(strings);
+}
+
 void append_log(int thread, int i)
 {
     pthread_mutex_t mutex = logger->log_mutex;
@@ -55,11 +70,14 @@ void append_log(int thread, int i)
     if (ret != 0)
         exit(ret);
     char *datetime = get_date_time();
-    ret = fprintf(logger->log_file, "%s [thread-%ld] string: %d\n", datetime, pthread_self(), i);
-    free(datetime);
+    ret = fprintf(logger->log_file, "%s [thread-%ld] [line-%d] string: %d\n", 
+            datetime, pthread_self(), __LINE__, i);
     if (ret < 0) 
         exit(ERROR_WRITE);
+    trace();
+    free(datetime);
     ret = pthread_mutex_unlock(&mutex);
     if (ret != 0)
         exit(ret);
 }
+

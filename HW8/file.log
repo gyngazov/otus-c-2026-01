@@ -20,3 +20,157 @@
 2026-03-18 13:58:55 [thread-140313522566912] string: 8
 2026-03-18 13:58:56 [thread-140313522566912] string: 9
 2026-03-18 13:58:57 [thread-140313522566912] string: 10
+2026-03-18 15:11:35 [thread-140300314416896] [line-58] string: 0
+2026-03-18 15:11:35 [thread-140300322809600] [line-58] string: 0
+2026-03-18 15:11:36 [thread-140300314416896] [line-58] string: 1
+2026-03-18 15:11:36 [thread-140300322809600] [line-58] string: 1
+2026-03-18 15:11:36 [thread-140300322809600] [line-58] string: 2
+2026-03-18 15:11:37 [thread-140300314416896] [line-58] string: 2
+2026-03-18 15:11:37 [thread-140300322809600] [line-58] string: 3
+2026-03-18 15:11:38 [thread-140300314416896] [line-58] string: 3
+2026-03-18 15:11:38 [thread-140300322809600] [line-58] string: 4
+2026-03-18 15:11:38 [thread-140300322809600] [line-58] string: 5
+2026-03-18 15:11:39 [thread-140300314416896] [line-58] string: 4
+2026-03-18 15:11:39 [thread-140300322809600] [line-58] string: 6
+2026-03-18 15:11:39 [thread-140300322809600] [line-58] string: 7
+2026-03-18 15:11:39 [thread-140300322809600] [line-58] string: 8
+2026-03-18 15:11:39 [thread-140300322809600] [line-58] string: 9
+2026-03-18 15:11:40 [thread-140300314416896] [line-58] string: 5
+2026-03-18 15:11:40 [thread-140300322809600] [line-58] string: 10
+2026-03-18 15:11:41 [thread-140300314416896] [line-58] string: 6
+2026-03-18 15:11:41 [thread-140300314416896] [line-58] string: 7
+2026-03-18 15:11:42 [thread-140300314416896] [line-58] string: 8
+2026-03-18 15:11:43 [thread-140300314416896] [line-58] string: 9
+2026-03-18 15:11:44 [thread-140300314416896] [line-58] string: 10
+2026-03-18 15:49:44 [thread-140217568073472] [line-74] string: 0
+2026-03-18 15:49:44 [thread-140217559680768] [line-74] string: 0
+./a.out() [0x400f58]
+./a.out() [0x401099]
+./a.out() [0x400d4e]
+/lib64/libpthread.so.0(+0x81ca) [0x7f86f29301ca]
+/lib64/libc.so.6(clone+0x43) [0x7f86f259bd83]
+2026-03-18 15:49:44 [thread-140217568073472] [line-74] string: 1
+./a.out() [0x400f58]
+./a.out() [0x401099]
+./a.out() [0x400d4e]
+/lib64/libpthread.so.0(+0x81ca) [0x7f86f29301ca]
+/lib64/libc.so.6(clone+0x43) [0x7f86f259bd83]
+./a.out() [0x400f58]
+./a.out() [0x401099]
+./a.out() [0x400d4e]
+/lib64/libpthread.so.0(+0x81ca) [0x7f86f29301ca]
+/lib64/libc.so.6(clone+0x43) [0x7f86f259bd83]
+2026-03-18 15:49:45 [thread-140217559680768] [line-74] string: 1
+2026-03-18 15:49:45 [thread-140217568073472] [line-74] string: 2
+./a.out() [0x400f58]
+./a.out() [0x401099]
+./a.out() [0x400d4e]
+/lib64/libpthread.so.0(+0x81ca) [0x7f86f29301ca]
+/lib64/libc.so.6(clone+0x43) [0x7f86f259bd83]
+./a.out() [0x400f58]
+./a.out() [0x401099]
+./a.out() [0x400d4e]
+/lib64/libpthread.so.0(+0x81ca) [0x7f86f29301ca]
+/lib64/libc.so.6(clone+0x43) [0x7f86f259bd83]
+2026-03-18 15:49:46 [thread-140217559680768] [line-74] string: 2
+2026-03-18 15:49:46 [thread-140217568073472] [line-74] string: 3
+./a.out() [0x400f58]
+./a.out() [0x401099]
+./a.out() [0x400d4e]
+/lib64/libpthread.so.0(+0x81ca) [0x7f86f29301ca]
+/lib64/libc.so.6(clone+0x43) [0x7f86f259bd83]
+2026-03-18 15:49:46 [thread-140217559680768] [line-74] string: 3
+./a.out() [0x400f58]
+./a.out() [0x401099]
+./a.out() [0x400d4e]
+/lib64/libpthread.so.0(+0x81ca) [0x7f86f29301ca]
+/lib64/libc.so.6(clone+0x43) [0x7f86f259bd83]
+./a.out() [0x400f58]
+./a.out() [0x401099]
+./a.out() [0x400d4e]
+/lib64/libpthread.so.0(+0x81ca) [0x7f86f29301ca]
+/lib64/libc.so.6(clone+0x43) [0x7f86f259bd83]
+2026-03-18 15:49:47 [thread-140217559680768] [line-74] string: 4
+./a.out() [0x400f58]
+./a.out() [0x401099]
+./a.out() [0x400d4e]
+2026-03-18 15:49:47 [thread-140217568073472] [line-74] string: 4
+/lib64/libpthread.so.0(+0x81ca) [0x7f86f29301ca]
+/lib64/libc.so.6(clone+0x43) [0x7f86f259bd83]
+./a.out() [0x400f58]
+./a.out() [0x401099]
+./a.out() [0x400d4e]
+/lib64/libpthread.so.0(+0x81ca) [0x7f86f29301ca]
+/lib64/libc.so.6(clone+0x43) [0x7f86f259bd83]
+2026-03-18 15:49:47 [thread-140217568073472] [line-74] string: 5
+./a.out() [0x400f58]
+./a.out() [0x401099]
+./a.out() [0x400d4e]
+/lib64/libpthread.so.0(+0x81ca) [0x7f86f29301ca]
+/lib64/libc.so.6(clone+0x43) [0x7f86f259bd83]
+2026-03-18 15:49:48 [thread-140217559680768] [line-74] string: 5
+./a.out() [0x400f58]
+./a.out() [0x401099]
+./a.out() [0x400d4e]
+/lib64/libpthread.so.0(+0x81ca) [0x7f86f29301ca]
+/lib64/libc.so.6(clone+0x43) [0x7f86f259bd83]
+2026-03-18 15:49:48 [thread-140217568073472] [line-74] string: 6
+2026-03-18 15:49:48 [thread-140217559680768] [line-74] string: 6
+./a.out() [0x400f58]
+./a.out() [0x401099]
+./a.out() [0x400d4e]
+/lib64/libpthread.so.0(+0x81ca) [0x7f86f29301ca]
+/lib64/libc.so.6(clone+0x43) [0x7f86f259bd83]
+2026-03-18 15:49:48 [thread-140217568073472] [line-74] string: 7
+./a.out() [0x400f58]
+./a.out() [0x401099]
+./a.out() [0x400d4e]
+/lib64/libpthread.so.0(+0x81ca) [0x7f86f29301ca]
+/lib64/libc.so.6(clone+0x43) [0x7f86f259bd83]
+./a.out() [0x400f58]
+./a.out() [0x401099]
+./a.out() [0x400d4e]
+/lib64/libpthread.so.0(+0x81ca) [0x7f86f29301ca]
+/lib64/libc.so.6(clone+0x43) [0x7f86f259bd83]
+2026-03-18 15:49:49 [thread-140217568073472] [line-74] string: 8
+./a.out() [0x400f58]
+./a.out() [0x401099]
+./a.out() [0x400d4e]
+/lib64/libpthread.so.0(+0x81ca) [0x7f86f29301ca]
+/lib64/libc.so.6(clone+0x43) [0x7f86f259bd83]
+2026-03-18 15:49:49 [thread-140217559680768] [line-74] string: 7
+2026-03-18 15:49:49 [thread-140217568073472] [line-74] string: 9
+./a.out() [0x400f58]
+./a.out() [0x401099]
+./a.out() [0x400d4e]
+/lib64/libpthread.so.0(+0x81ca) [0x7f86f29301ca]
+/lib64/libc.so.6(clone+0x43) [0x7f86f259bd83]
+2026-03-18 15:49:49 [thread-140217559680768] [line-74] string: 8
+./a.out() [0x400f58]
+./a.out() [0x401099]
+./a.out() [0x400d4e]
+/lib64/libpthread.so.0(+0x81ca) [0x7f86f29301ca]
+/lib64/libc.so.6(clone+0x43) [0x7f86f259bd83]
+2026-03-18 15:49:49 [thread-140217559680768] [line-74] string: 9
+./a.out() [0x400f58]
+./a.out() [0x401099]
+./a.out() [0x400d4e]
+/lib64/libpthread.so.0(+0x81ca) [0x7f86f29301ca]
+/lib64/libc.so.6(clone+0x43) [0x7f86f259bd83]
+./a.out() [0x400f58]
+./a.out() [0x401099]
+./a.out() [0x400d4e]
+/lib64/libpthread.so.0(+0x81ca) [0x7f86f29301ca]
+/lib64/libc.so.6(clone+0x43) [0x7f86f259bd83]
+2026-03-18 15:49:50 [thread-140217568073472] [line-74] string: 10
+2026-03-18 15:49:50 [thread-140217559680768] [line-74] string: 10
+./a.out() [0x400f58]
+./a.out() [0x401099]
+./a.out() [0x400d4e]
+/lib64/libpthread.so.0(+0x81ca) [0x7f86f29301ca]
+/lib64/libc.so.6(clone+0x43) [0x7f86f259bd83]
+./a.out() [0x400f58]
+./a.out() [0x401099]
+./a.out() [0x400d4e]
+/lib64/libpthread.so.0(+0x81ca) [0x7f86f29301ca]
+/lib64/libc.so.6(clone+0x43) [0x7f86f259bd83]

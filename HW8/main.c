@@ -12,9 +12,8 @@ void main()
     init_logger();
     printf("logger: %p\n", logger);
     int a = 1, b = 2;
-    pthread_t tid1;
+    pthread_t tid1, tid2;
     pthread_create(&tid1, NULL, job, &a); 
-    pthread_t tid2;
     pthread_create(&tid2, NULL, job, &b); 
     pthread_join(tid1, NULL);
     pthread_join(tid2, NULL);

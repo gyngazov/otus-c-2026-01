@@ -8,6 +8,8 @@
 #define ERROR_JOIN      -97
 #define ERROR_WRITE     -96
 #define ERROR_NOMEM     -95
+#define ERROR_NOSTACK   -94
+#define STACK_BUF_LEN   128
 
 struct Log_handler {
     FILE *log_file;
