@@ -7,27 +7,31 @@
 
 void *job(void *attr);
 
-void main()
+int main()
 {
     init_logger();
-    printf("logger: %p\n", logger);
-    int a = 1, b = 2;
+    printf("logger: %p\n", (void *)logger);
     pthread_t tid1, tid2;
-    pthread_create(&tid1, NULL, job, &a); 
-    pthread_create(&tid2, NULL, job, &b); 
+    pthread_create(&tid1, NULL, job, NULL); 
+    pthread_create(&tid2, NULL, job, NULL); 
     pthread_join(tid1, NULL);
     pthread_join(tid2, NULL);
     close_logger();
+    return 0;
 }
 
 void *job(void *attr)
 {
-    srand(time(NULL));
-    int *t = (int *) attr;
+    attr = NULL;
+    srand(time(attr));
     for (int i = 0; i < 11; i++) {
-        if (rand() % 2 == 0)
+        if (rand() % 2 == 0) {
+            error("error mesg");
             sleep(1);
-        append_log(*t, i);
+        } else {
+            info("info mesg");
+        }
     }
+    return NULL;
 }
 

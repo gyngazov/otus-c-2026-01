@@ -43,10 +43,18 @@ static char *get_date_time()
     char *output = (char *) malloc(sizeof(template) + 1);
     if (output == NULL)
         exit(ERROR_NOMEM);
-    sprintf(output, template, timeinfo->tm_year + 1900, timeinfo->tm_mon + 1,
+    int ret = sprintf(output, template, timeinfo->tm_year + 1900, timeinfo->tm_mon + 1,
             timeinfo->tm_mday, timeinfo->tm_hour,
             timeinfo->tm_min, timeinfo->tm_sec);
+    if (ret < 0)
+        exit(ERROR_DATATIME);
     return output;
+}
+
+void f_print(char *format, char *msg)
+{
+    if (fprintf(logger->log_file, format, msg) < 0)
+        exit(ERROR_WRITE);
 }
 
 static void trace()
@@ -58,24 +66,36 @@ static void trace()
     strings = backtrace_symbols(buffer, nptrs);
     if (strings == NULL)
         exit(ERROR_NOSTACK);
+    f_print(" %s", "stack_trace: {"); 
     for (int j = 0; j < nptrs; j++)
-        fprintf(logger->log_file, "%s\n", strings[j]);
+        f_print(" %s", strings[j]);
+    f_print("%s", "}");
     free(strings);
 }
-
-void append_log(int thread, int i)
+/*
+ * Запись в лог в формате:
+ * - метка времени
+ * - приоритет
+ * - id потока
+ * - номер строки
+ * - сообщение
+ * - стек трейс для ERROR
+ */
+void append_log(char *level, char *msg, int line)
 {
     pthread_mutex_t mutex = logger->log_mutex;
+    char *datetime = get_date_time();
     int ret = pthread_mutex_lock(&mutex);
     if (ret != 0)
         exit(ret);
-    char *datetime = get_date_time();
-    ret = fprintf(logger->log_file, "%s [thread-%ld] [line-%d] string: %d\n", 
-            datetime, pthread_self(), __LINE__, i);
-    if (ret < 0) 
-        exit(ERROR_WRITE);
-    trace();
+    ret = fprintf(logger->log_file, "%s %s [thread-%ld] [line-%d] %s", 
+                  datetime, level, pthread_self(), line, msg);
     free(datetime);
+    if (ret < 0)
+        exit(ERROR_WRITE);
+    if (*level == 'E')
+        trace();
+    f_print("%s", "\n");
     ret = pthread_mutex_unlock(&mutex);
     if (ret != 0)
         exit(ret);
