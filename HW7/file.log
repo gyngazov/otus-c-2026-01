@@ -1,0 +1,22 @@
+2026-03-19 11:42:38 ERROR [thread-140069228656384] [line-29] error mesg2026-03-19 11:42:38 ERROR [thread-140069237049088] [line-29] error mesg stack_trace: { ./logger() [0x400fbe] ./logger() [0x401133] ./logger() [0x400d3a] /lib64/libpthread.so.0(+0x81ca) [0x7f64695b31ca] /lib64/libc.so.6(clone+0x43) [0x7f646921ed83]}
+ stack_trace: { ./logger() [0x400fbe] ./logger() [0x401133] ./logger() [0x400d3a] /lib64/libpthread.so.0(+0x81ca) [0x7f64695b31ca] /lib64/libc.so.6(clone+0x43) [0x7f646921ed83]}
+2026-03-19 11:42:39 INFO [thread-140069228656384] [line-32] info mesg
+2026-03-19 11:42:39 ERROR [thread-140069228656384] [line-29] error mesg2026-03-19 11:42:39 INFO [thread-140069237049088] [line-32] info mesg
+ stack_trace: { ./logger() [0x400fbe] ./logger() [0x401133] ./logger() [0x400d3a] /lib64/libpthread.so.0(+0x81ca) [0x7f64695b31ca]2026-03-19 11:42:39 INFO [thread-140069237049088] [line-32] info mesg /lib64/libc.so.6(clone+0x43) [0x7f646921ed83]
+}
+2026-03-19 11:42:39 ERROR [thread-140069237049088] [line-29] error mesg stack_trace: { ./logger() [0x400fbe] ./logger() [0x401133] ./logger() [0x400d3a] /lib64/libpthread.so.0(+0x81ca) [0x7f64695b31ca] /lib64/libc.so.6(clone+0x43) [0x7f646921ed83]}
+2026-03-19 11:42:40 INFO [thread-140069228656384] [line-32] info mesg
+2026-03-19 11:42:40 INFO [thread-140069228656384] [line-32] info mesg
+2026-03-19 11:42:40 INFO [thread-140069228656384] [line-32] info mesg
+2026-03-19 11:42:40 ERROR [thread-140069228656384] [line-29] error mesg2026-03-19 11:42:40 INFO [thread-140069237049088] [line-32] info mesg
+2026-03-19 11:42:40 INFO [thread-140069237049088] [line-32] info mesg
+2026-03-19 11:42:40 INFO [thread-140069237049088] [line-32] info mesg
+ stack_trace: { ./logger() [0x400fbe] ./logger() [0x401133] ./logger() [0x400d3a] /lib64/libpthread.so.0(+0x81ca) [0x7f64695b31ca] /lib64/libc.so.6(clone+0x43) [0x7f646921ed83]}
+2026-03-19 11:42:40 INFO [thread-140069237049088] [line-32] info mesg
+2026-03-19 11:42:40 INFO [thread-140069237049088] [line-32] info mesg
+2026-03-19 11:42:40 ERROR [thread-140069237049088] [line-29] error mesg stack_trace: { ./logger() [0x400fbe] ./logger() [0x401133] ./logger() [0x400d3a] /lib64/libpthread.so.0(+0x81ca) [0x7f64695b31ca] /lib64/libc.so.6(clone+0x43) [0x7f646921ed83]}
+2026-03-19 11:42:41 ERROR [thread-140069228656384] [line-29] error mesg stack_trace: { ./logger() [0x400fbe] ./logger() [0x401133] ./logger() [0x400d3a] /lib64/libpthread.so.0(+0x81ca) [0x7f64695b31ca] /lib64/libc.so.6(clone+0x43) [0x7f646921ed83]}
+2026-03-19 11:42:41 INFO [thread-140069237049088] [line-32] info mesg
+2026-03-19 11:42:42 INFO [thread-140069228656384] [line-32] info mesg
+2026-03-19 11:42:42 INFO [thread-140069228656384] [line-32] info mesg
+2026-03-19 11:42:42 INFO [thread-140069228656384] [line-32] info mesg
