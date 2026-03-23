@@ -6,15 +6,21 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 
-#define RUNNING_DIR	"/tmp/"
-#define LOCK_FILE	RUNNING_DIR"otus.lock"
-#define LOG_FILE	RUNNING_DIR"otus.log"
+#define RUNNING_DIR	    "/tmp/"
+#define LOCK_FILE	    RUNNING_DIR"otus.lock"
+#define LOG_FILE	    RUNNING_DIR"otus.log"
 #define ERROR_OPENLOG   -11
 #define ERROR_LOG       -12
 #define ERROR_DEVNUL    -13
 #define ERROR_LOCK      -14
 #define ERROR_GETPID    -15
+
+#define SOCK_BUF        1024
+#define PORT            8080
+#define PENDING         3
 
 void log_message(char *filename, char *message)
 {
@@ -84,9 +90,56 @@ void daemonize()
         exit(errno);
 }
 
-void main()
+struct sockaddr_in set_addr()
+{
+    struct sockaddr_in address;
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(PORT);
+    return address;
+}
+
+int set_socket(struct sockaddr_in address)
+{
+    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd < 0)
+        exit(errno);
+    int opt = 1;
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT
+                , &opt, sizeof(opt)) == -1)
+        exit(errno);
+    if (bind(server_fd, (struct sockaddr*)&address, sizeof(address)) == -1)
+        exit(errno);
+    if (listen(server_fd, PENDING) == -1)
+        exit(errno);
+    return server_fd;
+}
+
+void dialog(int next)
+{
+    if (next == -1)
+        exit(errno);
+    char buffer[SOCK_BUF];
+    if (read(next, buffer, SOCK_BUF - 1) == -1)
+        exit(errno);
+    log_message(LOG_FILE, "query received: %s\n", buffer);
+    char *hello = "Hello\n";
+    if (send(next, hello, sizeof(hello), 0) == -1)
+        exit(errno);
+    if (close(next) == -1)
+        exit(errno);
+}
+
+int main()
 {
 	daemonize();
-	while(1) 
-        sleep(1); 
+    struct sockaddr_in addr = set_addr();
+    int srv_id = set_socket(addr);
+    socklen_t addrlen = sizeof(addr);
+    int next;
+    while (1) {
+        next = accept(srv_id, (struct sockaddr*)&addr, &addrlen);
+        dialog(next);
+    }
+    return 0;
 }
