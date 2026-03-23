@@ -9,7 +9,7 @@ void *job(void *attr);
 
 int main()
 {
-    init_logger();
+    init_logger("file.log", "ERROR");
     printf("logger: %p\n", (void *)logger);
     pthread_t tid1, tid2;
     pthread_create(&tid1, NULL, job, NULL); 
@@ -22,7 +22,6 @@ int main()
 
 void *job(void *attr)
 {
-    attr = NULL;
     srand(time(attr));
     for (int i = 0; i < 11; i++) {
         if (rand() % 2 == 0) {

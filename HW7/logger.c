@@ -5,11 +5,25 @@
 #include <string.h>
 #include <errno.h>
 #include <execinfo.h>
+#include <bool.h>
 
-void init_logger()
+bool is_level_ok(char *lvl)
 {
+    return *lvl == 'D' || *lvl == 'I' || *lvl == 'W' || *lvl == 'E';
+}
+/*
+ * Инитим:
+ * - именем лога
+ * - приоритетом, ниже которого не логировать.
+ */
+
+void init_logger(char *log_file, char *lvl)
+{
+    if (!is_level_ok(lvl))
+        exit(ERROR_LEVEL);
+    log_level = lvl;
     FILE *fp;
-    fp = fopen(LOG_FILE, "a");
+    fp = fopen(log_file, "a");
     if (fp == NULL)
         exit(errno);
     pthread_mutex_t mutex;
@@ -72,6 +86,22 @@ static void trace()
     f_print("%s", "}");
     free(strings);
 }
+
+// надо ли логировать сообщение с данным приоритетом
+static bool is_log(char *lvl)
+{
+    bool res;
+    if (*lvl == 'E')
+        res = true;
+    else if (*log_level == 'E')
+        res = false;
+    else if (*lvl < *log_level)
+        res = false;
+    else
+        res = true;
+    return res;
+}
+
 /*
  * Запись в лог в формате:
  * - метка времени
@@ -83,6 +113,8 @@ static void trace()
  */
 void append_log(char *level, char *msg, int line)
 {
+    if (!is_log(level))
+        return;
     pthread_mutex_t mutex = logger->log_mutex;
     char *datetime = get_date_time();
     int ret = pthread_mutex_lock(&mutex);
@@ -100,4 +132,3 @@ void append_log(char *level, char *msg, int line)
     if (ret != 0)
         exit(ret);
 }
-

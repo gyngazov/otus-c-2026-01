@@ -1,22 +1,22 @@
-2026-03-19 11:42:38 ERROR [thread-140069228656384] [line-29] error mesg2026-03-19 11:42:38 ERROR [thread-140069237049088] [line-29] error mesg stack_trace: { ./logger() [0x400fbe] ./logger() [0x401133] ./logger() [0x400d3a] /lib64/libpthread.so.0(+0x81ca) [0x7f64695b31ca] /lib64/libc.so.6(clone+0x43) [0x7f646921ed83]}
- stack_trace: { ./logger() [0x400fbe] ./logger() [0x401133] ./logger() [0x400d3a] /lib64/libpthread.so.0(+0x81ca) [0x7f64695b31ca] /lib64/libc.so.6(clone+0x43) [0x7f646921ed83]}
-2026-03-19 11:42:39 INFO [thread-140069228656384] [line-32] info mesg
-2026-03-19 11:42:39 ERROR [thread-140069228656384] [line-29] error mesg2026-03-19 11:42:39 INFO [thread-140069237049088] [line-32] info mesg
- stack_trace: { ./logger() [0x400fbe] ./logger() [0x401133] ./logger() [0x400d3a] /lib64/libpthread.so.0(+0x81ca) [0x7f64695b31ca]2026-03-19 11:42:39 INFO [thread-140069237049088] [line-32] info mesg /lib64/libc.so.6(clone+0x43) [0x7f646921ed83]
-}
-2026-03-19 11:42:39 ERROR [thread-140069237049088] [line-29] error mesg stack_trace: { ./logger() [0x400fbe] ./logger() [0x401133] ./logger() [0x400d3a] /lib64/libpthread.so.0(+0x81ca) [0x7f64695b31ca] /lib64/libc.so.6(clone+0x43) [0x7f646921ed83]}
-2026-03-19 11:42:40 INFO [thread-140069228656384] [line-32] info mesg
-2026-03-19 11:42:40 INFO [thread-140069228656384] [line-32] info mesg
-2026-03-19 11:42:40 INFO [thread-140069228656384] [line-32] info mesg
-2026-03-19 11:42:40 ERROR [thread-140069228656384] [line-29] error mesg2026-03-19 11:42:40 INFO [thread-140069237049088] [line-32] info mesg
-2026-03-19 11:42:40 INFO [thread-140069237049088] [line-32] info mesg
-2026-03-19 11:42:40 INFO [thread-140069237049088] [line-32] info mesg
- stack_trace: { ./logger() [0x400fbe] ./logger() [0x401133] ./logger() [0x400d3a] /lib64/libpthread.so.0(+0x81ca) [0x7f64695b31ca] /lib64/libc.so.6(clone+0x43) [0x7f646921ed83]}
-2026-03-19 11:42:40 INFO [thread-140069237049088] [line-32] info mesg
-2026-03-19 11:42:40 INFO [thread-140069237049088] [line-32] info mesg
-2026-03-19 11:42:40 ERROR [thread-140069237049088] [line-29] error mesg stack_trace: { ./logger() [0x400fbe] ./logger() [0x401133] ./logger() [0x400d3a] /lib64/libpthread.so.0(+0x81ca) [0x7f64695b31ca] /lib64/libc.so.6(clone+0x43) [0x7f646921ed83]}
-2026-03-19 11:42:41 ERROR [thread-140069228656384] [line-29] error mesg stack_trace: { ./logger() [0x400fbe] ./logger() [0x401133] ./logger() [0x400d3a] /lib64/libpthread.so.0(+0x81ca) [0x7f64695b31ca] /lib64/libc.so.6(clone+0x43) [0x7f646921ed83]}
-2026-03-19 11:42:41 INFO [thread-140069237049088] [line-32] info mesg
-2026-03-19 11:42:42 INFO [thread-140069228656384] [line-32] info mesg
-2026-03-19 11:42:42 INFO [thread-140069228656384] [line-32] info mesg
-2026-03-19 11:42:42 INFO [thread-140069228656384] [line-32] info mesg
+2026-03-19 13:16:43 INFO [thread-140404186240768] [line-31] info mesg
+2026-03-19 13:16:43 INFO [thread-140404186240768] [line-31] info mesg
+2026-03-19 13:16:43 ERROR [thread-140404186240768] [line-28] error mesg2026-03-19 13:16:43 INFO [thread-140404177848064] [line-31] info mesg
+2026-03-19 13:16:43 ERROR [thread-140404177848064] [line-28] error mesg stack_trace: { ./logger() [0x400fbb] ./logger() [0x401130] ./logger() [0x400d37] /lib64/libpthread.so.0(+0x81ca) [0x7fb265e241ca] /lib64/libc.so.6(clone+0x43) [0x7fb265a8fd83]}
+ stack_trace: { ./logger() [0x400fbb] ./logger() [0x401130] ./logger() [0x400d37] /lib64/libpthread.so.0(+0x81ca) [0x7fb265e241ca] /lib64/libc.so.6(clone+0x43) [0x7fb265a8fd83]}
+2026-03-19 13:16:44 INFO [thread-140404186240768] [line-31] info mesg
+2026-03-19 13:16:44 ERROR [thread-140404177848064] [line-28] error mesg stack_trace: { ./logger() [0x400fbb] ./logger() [0x401130] ./logger() [0x400d37] /lib64/libpthread.so.0(+0x81ca) [0x7fb265e241ca] /lib64/libc.so.6(clone+0x43) [0x7fb265a8fd83]}
+2026-03-19 13:16:44 INFO [thread-140404186240768] [line-31] info mesg
+2026-03-19 13:16:44 ERROR [thread-140404186240768] [line-28] error mesg stack_trace: { ./logger() [0x400fbb] ./logger() [0x401130] ./logger() [0x400d37] /lib64/libpthread.so.0(+0x81ca) [0x7fb265e241ca] /lib64/libc.so.6(clone+0x43) [0x7fb265a8fd83]}
+2026-03-19 13:16:45 ERROR [thread-140404177848064] [line-28] error mesg stack_trace: { ./logger() [0x400fbb] ./logger() [0x401130] ./logger() [0x400d37] /lib64/libpthread.so.0(+0x81ca) [0x7fb265e241ca] /lib64/libc.so.6(clone+0x43) [0x7fb265a8fd83]}
+2026-03-19 13:16:45 ERROR [thread-140404186240768] [line-28] error mesg stack_trace: { ./logger() [0x400fbb] ./logger() [0x401130] ./logger() [0x400d37] /lib64/libpthread.so.0(+0x81ca) [0x7fb265e241ca] /lib64/libc.so.6(clone+0x43) [0x7fb265a8fd83]}
+2026-03-19 13:16:46 INFO [thread-140404177848064] [line-31] info mesg
+2026-03-19 13:16:46 ERROR [thread-140404186240768] [line-28] error mesg stack_trace: { ./logger() [0x400fbb] ./logger() [0x401130] ./logger() [0x400d37] /lib64/libpthread.so.0(+0x81ca) [0x7fb265e241ca] /lib64/libc.so.6(clone+0x43) [0x7fb265a8fd83]}
+2026-03-19 13:16:46 INFO [thread-140404177848064] [line-31] info mesg
+2026-03-19 13:16:46 INFO [thread-140404177848064] [line-31] info mesg
+2026-03-19 13:16:46 ERROR [thread-140404177848064] [line-28] error mesg stack_trace: { ./logger() [0x400fbb] ./logger() [0x401130] ./logger() [0x400d37] /lib64/libpthread.so.0(+0x81ca) [0x7fb265e241ca] /lib64/libc.so.6(clone+0x43) [0x7fb265a8fd83]}
+2026-03-19 13:16:47 INFO [thread-140404186240768] [line-31] info mesg
+2026-03-19 13:16:47 INFO [thread-140404186240768] [line-31] info mesg
+2026-03-19 13:16:47 INFO [thread-140404186240768] [line-31] info mesg
+2026-03-19 13:16:47 ERROR [thread-140404177848064] [line-28] error mesg stack_trace: { ./logger() [0x400fbb] ./logger() [0x401130] ./logger() [0x400d37] /lib64/libpthread.so.0(+0x81ca) [0x7fb265e241ca] /lib64/libc.so.6(clone+0x43) [0x7fb265a8fd83]}
+2026-03-19 13:16:48 ERROR [thread-140404177848064] [line-28] error mesg stack_trace: { ./logger() [0x400fbb] ./logger() [0x401130] ./logger() [0x400d37] /lib64/libpthread.so.0(+0x81ca) [0x7fb265e241ca] /lib64/libc.so.6(clone+0x43) [0x7fb265a8fd83]}
+2026-03-19 13:16:49 INFO [thread-140404177848064] [line-31] info mesg
