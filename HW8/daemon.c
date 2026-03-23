@@ -8,6 +8,8 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <time.h>
+#include <arpa/inet.h>
 
 #define RUNNING_DIR	    "/tmp/"
 #define LOCK_FILE	    RUNNING_DIR"otus.lock"
@@ -17,23 +19,48 @@
 #define ERROR_DEVNUL    -13
 #define ERROR_LOCK      -14
 #define ERROR_GETPID    -15
+#define ERROR_NOMEM     -16
+#define ERROR_SPRINT    -18
+#define FILE_NAME       LOG_FILE
+#define RESP_LEN        32
 
 #define SOCK_BUF        1024
 #define PORT            8080
 #define PENDING         3
 
-void log_message(char *filename, char *message)
+static char *get_date_time()
+{
+    time_t now;
+    struct tm *timeinfo;
+    time(&now);
+    timeinfo = localtime(&now);
+    char *template = "%d-%02d-%02d %02d:%02d:%02d";
+    char *output = (char *) malloc(sizeof(template) + 1);
+    if (output == NULL)
+        exit(ERROR_NOMEM);
+    int ret = sprintf(output, template, timeinfo->tm_year + 1900, timeinfo->tm_mon + 1,
+            timeinfo->tm_mday, timeinfo->tm_hour,
+            timeinfo->tm_min, timeinfo->tm_sec);
+    if (ret < 0)
+        exit(ERROR_SPRINT);
+    return output;
+}
+
+void log_message(char *message)
 {
     FILE *logfile;
-	logfile = fopen(filename,"a");
+	logfile = fopen(LOG_FILE, "a");
 	if (logfile == NULL) {
         printf("can not open log file\n");
         exit(ERROR_OPENLOG);
     }
-	if (fprintf(logfile,"%s\n",message) < 0) {
+    char *dt;
+    dt = get_date_time();
+	if (fprintf(logfile, "%s %s\n", dt, message) < 0) {
         printf("cannot write log\n");
         exit(ERROR_LOG);
     }
+    free(dt);
 	fclose(logfile);
 }
 
@@ -41,10 +68,10 @@ void signal_handler(int sig)
 {
 	switch(sig) {
 	case SIGHUP:
-		log_message(LOG_FILE,"hangup signal catched\n");
+		log_message("hangup signal catched");
 		break;
 	case SIGTERM:
-		log_message(LOG_FILE,"terminate signal catched\n");
+		log_message("terminate signal catched");
 		exit(0);
 		break;
 	}
@@ -115,6 +142,32 @@ int set_socket(struct sockaddr_in address)
     return server_fd;
 }
 
+void log_ip(struct sockaddr_in client)
+{
+    struct sockaddr_in* pV4Addr = (struct sockaddr_in*)&client;
+    struct in_addr ipAddr = pV4Addr->sin_addr;
+    char *ip;
+    ip = (char *) malloc(INET_ADDRSTRLEN + 1);
+    if (ip == NULL)
+        exit(ERROR_NOMEM);
+    if (inet_ntop(AF_INET, &ipAddr, ip, INET_ADDRSTRLEN) == NULL)
+        exit(errno);
+    char msg[INET_ADDRSTRLEN + 13];
+    int ret = sprintf(msg, "Client ip: %s", ip);
+    if (ret < 0)
+        exit(ERROR_SPRINT);
+    log_message(msg);
+    free(ip);
+}
+
+long get_file_size(char *name)
+{
+    struct stat sb;
+    if (stat(name, &sb) == -1)
+        exit(errno);
+    return sb.st_size;
+}
+
 void dialog(int next)
 {
     if (next == -1)
@@ -122,13 +175,21 @@ void dialog(int next)
     char buffer[SOCK_BUF];
     if (read(next, buffer, SOCK_BUF - 1) == -1)
         exit(errno);
-    log_message(LOG_FILE, "query received: %s\n", buffer);
-    char *hello = "Hello\n";
-    if (send(next, hello, sizeof(hello), 0) == -1)
+    int blen = sizeof(buffer);
+    char msg[blen + 16];
+    if (sprintf(msg, "Query received: %s", buffer) < 0)
+        exit(ERROR_SPRINT);
+    log_message(msg);
+    char resp[RESP_LEN];
+    if (sprintf(resp, "File %s has size %ld", FILE_NAME, get_file_size(FILE_NAME)) < 0)
+        exit(ERROR_SPRINT);
+    log_message(resp);
+    if (send(next, resp, sizeof(resp) + 1, 0) == -1)
         exit(errno);
     if (close(next) == -1)
         exit(errno);
 }
+
 
 int main()
 {
@@ -138,7 +199,8 @@ int main()
     socklen_t addrlen = sizeof(addr);
     int next;
     while (1) {
-        next = accept(srv_id, (struct sockaddr*)&addr, &addrlen);
+        next = accept(srv_id, (struct sockaddr *) &addr, &addrlen);
+        log_ip(addr);
         dialog(next);
     }
     return 0;
