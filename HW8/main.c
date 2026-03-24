@@ -3,7 +3,7 @@
 
 #define CFG_FILE "config.cfg"
 
-void main(int argc, char **argv)
+int main(int argc, char **argv)
 {
     char *cfg;
     if (argc == 2)
@@ -23,5 +23,6 @@ void main(int argc, char **argv)
         update_size();
         dialog(next);
     }
+    return 0;
 }
 

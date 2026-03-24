@@ -1,7 +1,7 @@
 #include <stdio.h>
-#include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -10,24 +10,23 @@
 #include <netinet/in.h>
 #include <time.h>
 #include <arpa/inet.h>
+#include <string.h>
 
 #include "config.h"
 
 #define RUNNING_DIR	    "/tmp/"
 #define LOCK_FILE	    RUNNING_DIR"otus.lock"
 #define LOG_FILE	    RUNNING_DIR"otus.log"
+#define LOCKMODE        (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)
 #define ERROR_OPENLOG   -11
 #define ERROR_LOG       -12
-#define ERROR_DEVNUL    -13
 #define ERROR_LOCK      -14
-#define ERROR_GETPID    -15
 #define ERROR_NOMEM     -16
 #define ERROR_SPRINT    -18
 #define FILE_NAME       LOG_FILE
-#define RESP_LEN        32
+#define RESP_LEN        128
 
 #define SOCK_BUF        1024
-#define PORT            8080
 #define PENDING         3
 
 static char *file_name;
@@ -82,6 +81,28 @@ static void signal_handler(int sig)
 	}
 }
 
+int ftruncate(int fd, off_t length);
+void set_lock()
+{
+    int fd = open(LOCK_FILE, O_RDWR | O_CREAT, LOCKMODE);
+    if (fd == -1)
+        exit(errno);
+    struct flock fl;
+    fl.l_type = F_WRLCK;
+    fl.l_start = 0;
+    fl.l_whence = SEEK_SET;
+    fl.l_len = 0;
+    if (fcntl(fd, F_SETLK, &fl) == -1)
+        exit(errno);
+    if (ftruncate(fd, 0) == -1)
+        exit(errno);
+    char str[16];
+    if (sprintf(str, "%d\n", getpid()) < 0)
+        exit(ERROR_SPRINT);
+    if (write(fd, str, sizeof(str)) == -1)
+        exit(errno);
+}
+int getdtablesize(void);
 void daemonize()
 {
 	if (getppid() == 1) 
@@ -93,31 +114,26 @@ void daemonize()
         exit(0);
 	if (setsid() == -1)
         exit(errno);
-	for (i = getdtablesize(); i >= 0; --i) 
-        close(i); 
-	i = open("/dev/null", O_RDWR);
-    if (i != 0)
-        exit(ERROR_DEVNUL);
+    int dts = getdtablesize();
+    if (dts == -1)
+        exit(errno);
+    for (i = 0; i <= dts; i++)
+        if (close(i) == -1)
+            exit(errno);
+    i = open("/dev/null", O_RDWR);
+    if (i == -1)
+        exit(errno);
     if (dup(i) == -1 || dup(i) == -1)
         exit(errno);
-	umask(027); 
-	if (chdir(RUNNING_DIR) == -1)
+    umask(027);
+    if (chdir(RUNNING_DIR) == -1)
         exit(errno);
-	int lfp = open(LOCK_FILE, O_RDWR | O_CREAT, 0640);
-	if (lfp < 0) 
-        exit(1); 
-	if (lockf(lfp, F_TLOCK, 0) < 0) 
-        exit(ERROR_LOCK); 
-    char str[10];
-	if (sprintf(str, "%d\n", getpid()) < 0)
-        exit(ERROR_GETPID);
-	if (write(lfp, str, sizeof(str)) == -1)
-        exit(errno);
+    set_lock();
 	if (signal(SIGCHLD, SIG_IGN) == SIG_ERR || 
-	    signal(SIGTSTP, SIG_IGN) == SIG_ERR ||
-	    signal(SIGTTOU, SIG_IGN) == SIG_ERR ||
-	    signal(SIGTTIN, SIG_IGN) == SIG_ERR ||
-	    signal(SIGHUP, signal_handler) == SIG_ERR ||
+	    signal(SIGTSTP, SIG_IGN) == SIG_ERR || 
+	    signal(SIGTTOU, SIG_IGN) == SIG_ERR || 
+	    signal(SIGTTIN, SIG_IGN) == SIG_ERR || 
+	    signal(SIGHUP, signal_handler) == SIG_ERR || 
 	    signal(SIGTERM, signal_handler) == SIG_ERR)
         exit(errno);
 }
@@ -197,7 +213,7 @@ void dialog(int next)
     if (ret < 0)
         exit(ERROR_SPRINT);
     log_message(resp);
-    if (send(next, resp, sizeof(resp) + 1, 0) == -1)
+    if (send(next, resp, strlen(resp) + 1, 0) == -1)
         exit(errno);
     if (close(next) == -1)
         exit(errno);
