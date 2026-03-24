@@ -11,6 +11,8 @@
 #include <time.h>
 #include <arpa/inet.h>
 
+#include "config.h"
+
 #define RUNNING_DIR	    "/tmp/"
 #define LOCK_FILE	    RUNNING_DIR"otus.lock"
 #define LOG_FILE	    RUNNING_DIR"otus.log"
@@ -27,6 +29,9 @@
 #define SOCK_BUF        1024
 #define PORT            8080
 #define PENDING         3
+
+static char *file_name;
+static long file_size;
 
 static char *get_date_time()
 {
@@ -46,7 +51,7 @@ static char *get_date_time()
     return output;
 }
 
-void log_message(char *message)
+static void log_message(char *message)
 {
     FILE *logfile;
 	logfile = fopen(LOG_FILE, "a");
@@ -64,7 +69,7 @@ void log_message(char *message)
 	fclose(logfile);
 }
 
-void signal_handler(int sig)
+static void signal_handler(int sig)
 {
 	switch(sig) {
 	case SIGHUP:
@@ -117,12 +122,12 @@ void daemonize()
         exit(errno);
 }
 
-struct sockaddr_in set_addr()
+struct sockaddr_in set_addr(int port)
 {
     struct sockaddr_in address;
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(PORT);
+    address.sin_port = htons(port);
     return address;
 }
 
@@ -160,12 +165,15 @@ void log_ip(struct sockaddr_in client)
     free(ip);
 }
 
-long get_file_size(char *name)
+void set_file_name(char *name)
 {
-    struct stat sb;
-    if (stat(name, &sb) == -1)
-        exit(errno);
-    return sb.st_size;
+    file_name = name;    
+}
+
+void update_size()
+{
+    struct stat stt;
+    file_size = stat(file_name, &stt) == -1 ? -1L : stt.st_size;
 }
 
 void dialog(int next)
@@ -181,27 +189,16 @@ void dialog(int next)
         exit(ERROR_SPRINT);
     log_message(msg);
     char resp[RESP_LEN];
-    if (sprintf(resp, "File %s has size %ld", FILE_NAME, get_file_size(FILE_NAME)) < 0)
+    int ret;
+    if (file_size == -1L)
+        ret = sprintf(resp, "File %s access error", file_name);
+    else
+        ret = sprintf(resp, "File %s has size %ld", file_name, file_size);
+    if (ret < 0)
         exit(ERROR_SPRINT);
     log_message(resp);
     if (send(next, resp, sizeof(resp) + 1, 0) == -1)
         exit(errno);
     if (close(next) == -1)
         exit(errno);
-}
-
-
-int main()
-{
-	daemonize();
-    struct sockaddr_in addr = set_addr();
-    int srv_id = set_socket(addr);
-    socklen_t addrlen = sizeof(addr);
-    int next;
-    while (1) {
-        next = accept(srv_id, (struct sockaddr *) &addr, &addrlen);
-        log_ip(addr);
-        dialog(next);
-    }
-    return 0;
 }
