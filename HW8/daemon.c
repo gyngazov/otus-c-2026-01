@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+#include <sys/resource.h>
 #include <netinet/in.h>
 #include <time.h>
 #include <arpa/inet.h>
@@ -28,6 +29,7 @@
 
 #define SOCK_BUF        1024
 #define PENDING         3
+#define MAX_RL          1024
 
 static char *file_name;
 static long file_size;
@@ -114,12 +116,14 @@ void daemonize()
         exit(0);
 	if (setsid() == -1)
         exit(errno);
-    int dts = getdtablesize();
-    if (dts == -1)
+    struct rlimit rl;
+    if (getrlimit(RLIMIT_NOFILE, &rl) == -1)
         exit(errno);
-    for (i = 0; i <= dts; i++)
-        if (close(i) == -1)
-            exit(errno);
+    if (rl.rlim_max == RLIM_INFINITY)
+        rl.rlim_max = MAX_RL;
+    unsigned long j;
+    for (j = 0; j < rl.rlim_max; j++)
+        close(j);
     i = open("/dev/null", O_RDWR);
     if (i == -1)
         exit(errno);
