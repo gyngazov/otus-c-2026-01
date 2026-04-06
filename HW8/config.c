@@ -6,11 +6,11 @@
 
 #include "config.h"
 
-struct Params get_params(char *cfg_name) 
+struct Params get_params(const char *cfg_name) 
 {
     cfg_opt_t opts[] = {
-        CFG_STR("file", DEFAULT_NAME, CFGF_NONE),
-        CFG_INT("port", DEFAULT_PORT, CFGF_NONE),
+        CFG_STR(FILE_CFG, DEFAULT_NAME, CFGF_NONE),
+        CFG_INT(PORT_CFG, DEFAULT_PORT, CFGF_NONE),
         CFG_END()
     };
     cfg_t *cfg;
@@ -20,8 +20,8 @@ struct Params get_params(char *cfg_name)
         exit(-1);
     }
     struct Params params;
-    params.port = cfg_getint(cfg, "port");
-    strncpy(params.file, cfg_getstr(cfg, "file"), FILE_LEN - 1);
+    params.port = cfg_getint(cfg, PORT_CFG);
+    strncpy(params.file, cfg_getstr(cfg, FILE_CFG), FILE_LEN - 1);
     cfg_free(cfg);
     return params;
 }

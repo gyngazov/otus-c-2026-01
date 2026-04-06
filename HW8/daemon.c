@@ -26,10 +26,13 @@
 #define ERROR_SPRINT    -18
 #define FILE_NAME       LOG_FILE
 #define RESP_LEN        128
+#define DATE_TIME       "%d-%02d-%02d %02d:%02d:%02d"
 
 #define SOCK_BUF        1024
 #define PENDING         3
 #define MAX_RL          1024
+
+#define _GNU_SOURCE
 
 static char *file_name;
 static long file_size;
@@ -40,11 +43,10 @@ static char *get_date_time()
     struct tm *timeinfo;
     time(&now);
     timeinfo = localtime(&now);
-    char *template = "%d-%02d-%02d %02d:%02d:%02d";
-    char *output = (char *) malloc(sizeof(template) + 1);
+    char *output = (char *) malloc(sizeof(DATE_TIME) + 1);
     if (output == NULL)
         exit(ERROR_NOMEM);
-    int ret = sprintf(output, template, timeinfo->tm_year + 1900, timeinfo->tm_mon + 1,
+    int ret = sprintf(output, DATE_TIME, timeinfo->tm_year + 1900, timeinfo->tm_mon + 1,
             timeinfo->tm_mday, timeinfo->tm_hour,
             timeinfo->tm_min, timeinfo->tm_sec);
     if (ret < 0)
