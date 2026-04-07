@@ -6,7 +6,7 @@
 
 #include "config.h"
 
-struct Params get_params(char *cfg_name) 
+struct Params get_params(const char *cfg_name) 
 {
     cfg_opt_t opts[] = {
         CFG_STR("file", DEFAULT_NAME, CFGF_NONE),
@@ -21,7 +21,9 @@ struct Params get_params(char *cfg_name)
     }
     struct Params params;
     params.port = cfg_getint(cfg, "port");
-    strncpy(params.file, cfg_getstr(cfg, "file"), FILE_LEN - 1);
+    char *cfg_file;
+    cfg_file = cfg_getstr(cfg, "file");
+    snprintf(params.file, sizeof(cfg_file), cfg_file);
     cfg_free(cfg);
     return params;
 }

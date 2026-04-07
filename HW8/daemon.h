@@ -1,6 +1,6 @@
 #include <netinet/in.h>
 
-void set_file_name(char *name);
+void set_file_name(const char *name);
 void update_size();
 void daemonize();
 struct sockaddr_in set_addr(int port);

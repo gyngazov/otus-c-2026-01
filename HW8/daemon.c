@@ -26,12 +26,15 @@
 #define ERROR_SPRINT    -18
 #define FILE_NAME       LOG_FILE
 #define RESP_LEN        128
+#define DATE_TIME       "%d-%02d-%02d %02d:%02d:%02d"
 
 #define SOCK_BUF        1024
 #define PENDING         3
 #define MAX_RL          1024
 
-static char *file_name;
+#define _GNU_SOURCE
+
+static const char *file_name;
 static long file_size;
 
 static char *get_date_time()
@@ -40,11 +43,11 @@ static char *get_date_time()
     struct tm *timeinfo;
     time(&now);
     timeinfo = localtime(&now);
-    char *template = "%d-%02d-%02d %02d:%02d:%02d";
-    char *output = (char *) malloc(sizeof(template) + 1);
+    int dt_len = sizeof(DATE_TIME);
+    char *output = (char *) malloc(dt_len);
     if (output == NULL)
         exit(ERROR_NOMEM);
-    int ret = sprintf(output, template, timeinfo->tm_year + 1900, timeinfo->tm_mon + 1,
+    int ret = snprintf(output, dt_len, DATE_TIME, timeinfo->tm_year + 1900, timeinfo->tm_mon + 1,
             timeinfo->tm_mday, timeinfo->tm_hour,
             timeinfo->tm_min, timeinfo->tm_sec);
     if (ret < 0)
@@ -52,7 +55,7 @@ static char *get_date_time()
     return output;
 }
 
-static void log_message(char *message)
+static void log_message(const char *message)
 {
     FILE *logfile;
 	logfile = fopen(LOG_FILE, "a");
@@ -84,6 +87,7 @@ static void signal_handler(int sig)
 }
 
 int ftruncate(int fd, off_t length);
+
 void set_lock()
 {
     int fd = open(LOCK_FILE, O_RDWR | O_CREAT, LOCKMODE);
@@ -99,12 +103,14 @@ void set_lock()
     if (ftruncate(fd, 0) == -1)
         exit(errno);
     char str[16];
-    if (sprintf(str, "%d\n", getpid()) < 0)
+    if (snprintf(str, 16, "%d\n", getpid()) < 0)
         exit(ERROR_SPRINT);
     if (write(fd, str, sizeof(str)) == -1)
         exit(errno);
 }
+
 int getdtablesize(void);
+
 void daemonize()
 {
 	if (getppid() == 1) 
@@ -178,21 +184,24 @@ void log_ip(struct sockaddr_in client)
     if (inet_ntop(AF_INET, &ipAddr, ip, INET_ADDRSTRLEN) == NULL)
         exit(errno);
     char msg[INET_ADDRSTRLEN + 13];
-    int ret = sprintf(msg, "Client ip: %s", ip);
+    int ret = snprintf(msg, INET_ADDRSTRLEN + 13, "Client ip: %s", ip);
     if (ret < 0)
         exit(ERROR_SPRINT);
     log_message(msg);
     free(ip);
 }
 
-void set_file_name(char *name)
+void set_file_name(const char *name)
 {
-    file_name = name;    
+    log_message(name);
+    file_name = name;
+    log_message(file_name);   
 }
 
 void update_size()
 {
     struct stat stt;
+    log_message(file_name);
     file_size = stat(file_name, &stt) == -1 ? -1L : stt.st_size;
 }
 
@@ -203,21 +212,20 @@ void dialog(int next)
     char buffer[SOCK_BUF];
     if (read(next, buffer, SOCK_BUF - 1) == -1)
         exit(errno);
-    int blen = sizeof(buffer);
-    char msg[blen + 16];
-    if (sprintf(msg, "Query received: %s", buffer) < 0)
+    char msg[SOCK_BUF + 16];
+    if (snprintf(msg, SOCK_BUF + 16, "Query received: %s", buffer) < 0)
         exit(ERROR_SPRINT);
     log_message(msg);
     char resp[RESP_LEN];
     int ret;
     if (file_size == -1L)
-        ret = sprintf(resp, "File %s access error", file_name);
+        ret = snprintf(resp, RESP_LEN, "File %s access error", file_name);
     else
-        ret = sprintf(resp, "File %s has size %ld", file_name, file_size);
+        ret = snprintf(resp, RESP_LEN, "File %s has size %ld", file_name, file_size);
     if (ret < 0)
         exit(ERROR_SPRINT);
     log_message(resp);
-    if (send(next, resp, strlen(resp) + 1, 0) == -1)
+    if (send(next, resp, sizeof(resp), 0) == -1)
         exit(errno);
     if (close(next) == -1)
         exit(errno);

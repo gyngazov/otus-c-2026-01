@@ -1,7 +1,7 @@
+#include <stdio.h>
+
 #include "daemon.h"
 #include "config.h"
-
-#define CFG_FILE "config.cfg"
 
 int main(int argc, char **argv)
 {
@@ -11,6 +11,7 @@ int main(int argc, char **argv)
     else 
         cfg = CFG_FILE;
     struct Params params = get_params(cfg);
+    printf("file: %s\n", params.file);
     daemonize();
     struct sockaddr_in addr = set_addr(params.port);
     int srv_id = set_socket(addr);
