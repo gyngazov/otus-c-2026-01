@@ -57,22 +57,22 @@ static int get_date_time()
     return EXIT_SUCCESS;
 }
 
-static int log_message(const char *message)
+void log_message(const char *message)
 {
     FILE *logfile;
 	logfile = fopen(LOG_FILE, "a");
 	if (logfile == NULL) {
         printf("Can't open log file\n");
-        return ERROR_OPENLOG;
+        exit(ERROR_OPENLOG);
     }
     int ret = get_date_time();
     if (ret != EXIT_SUCCESS) {
         printf("Can't obtain date and time\n");
-        return ret;
+        exit(ret);
     }
 	if (fprintf(logfile, "%s %s\n", datetime, message) < 0) {
         printf("Can't write log\n");
-        return ERROR_LOG;
+        exit(ERROR_LOG);
     }
     free(datetime);
 	fclose(logfile);
@@ -80,23 +80,13 @@ static int log_message(const char *message)
 
 static void signal_handler(int sig)
 {
-    int ret;
 	switch(sig) {
 	case SIGHUP:
-		ret = log_message("hangup signal catched");
-        if (ret != EXIT_SUCCESS) {
-            printf("Can't log sighup\n");
-            exit(ret);
-        }
+		log_message("hangup signal catched");
 		break;
 	case SIGTERM:
-		ret = log_message("terminate signal catched");
-        if (ret != EXIT_SUCCESS) {
-            printf("Can't log sigterm\n");
-            exit(ret);
-        } else {
-            exit(EXIT_SUCCESS);
-        }
+		log_message("terminate signal catched");
+        exit(EXIT_SUCCESS);
 		break;
 	}
 }
@@ -155,8 +145,10 @@ int daemonize()
     if (chdir(RUNNING_DIR) == -1)
         return errno;
     int sl = set_lock();
-    if (sl != EXIT_SUCCESS)
+    if (sl != EXIT_SUCCESS) {
+        log_message("Lock is not set");
         return sl;
+    }
 	if (signal(SIGCHLD, SIG_IGN) == SIG_ERR || 
 	    signal(SIGTSTP, SIG_IGN) == SIG_ERR || 
 	    signal(SIGTTOU, SIG_IGN) == SIG_ERR || 
@@ -165,15 +157,6 @@ int daemonize()
 	    signal(SIGTERM, signal_handler) == SIG_ERR)
         return errno;
     return EXIT_SUCCESS;
-}
-
-struct sockaddr_in set_addr(int port)
-{
-    struct sockaddr_in address;
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(port);
-    return address;
 }
 
 int set_socket(int port)
@@ -187,16 +170,11 @@ int set_socket(int port)
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
     address.sin_port = htons(port);
-    if (bind(server_fd, (struct sockaddr*)&address, sizeof(address)) == -1)
+    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) == -1)
         return errno;
     if (listen(server_fd, PENDING) == -1)
         return errno;
     return EXIT_SUCCESS;
-}
-
-int get_server_fd()
-{
-    return server_fd;
 }
 
 int get_conn()
@@ -215,7 +193,7 @@ int log_ip()
     if (inet_ntop(AF_INET, &ipAddr, ip, INET_ADDRSTRLEN) == NULL)
         return errno;
     char msg[INET_ADDRSTRLEN + 13];
-    int ret = sprintf(msg, "Client ip: %s", ip);
+    int ret = snprintf(msg, INET_ADDRSTRLEN + 13, "Client ip: %s", ip);
     if (ret < 0)
         return ERROR_SPRINT;
     log_message(msg);

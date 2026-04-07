@@ -5,8 +5,7 @@
 
 struct Params {
     int port;
-    char file[FILE_LEN];
+    const char *file;
 };
 
-struct Params get_params(char *cfg_name);
-
+struct Params get_params(const char *cfg_name);
