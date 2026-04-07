@@ -15,6 +15,7 @@
 
 #include "config.h"
 
+#define _GNU_SOURCE
 #define RUNNING_DIR	    "/tmp/"
 #define LOCK_FILE	    RUNNING_DIR"otus.lock"
 #define LOG_FILE	    RUNNING_DIR"otus.log"
@@ -30,9 +31,10 @@
 #define SOCK_BUF        1024
 #define PENDING         3
 #define MAX_RL          1024
+#define DT_TEMPLATE     "%d-%02d-%02d %02d:%02d:%02d"
 
-static char *file_name;
-static long file_size;
+static const char *file_name;
+static long file_size = 0L;
 
 static char *get_date_time()
 {
@@ -40,11 +42,11 @@ static char *get_date_time()
     struct tm *timeinfo;
     time(&now);
     timeinfo = localtime(&now);
-    char *template = "%d-%02d-%02d %02d:%02d:%02d";
-    char *output = (char *) malloc(sizeof(template) + 1);
+    char *output = (char *) malloc(sizeof(DT_TEMPLATE));
     if (output == NULL)
         exit(ERROR_NOMEM);
-    int ret = sprintf(output, template, timeinfo->tm_year + 1900, timeinfo->tm_mon + 1,
+    int ret = snprintf(output, sizeof(DT_TEMPLATE), DT_TEMPLATE, 
+            timeinfo->tm_year + 1900, timeinfo->tm_mon + 1,
             timeinfo->tm_mday, timeinfo->tm_hour,
             timeinfo->tm_min, timeinfo->tm_sec);
     if (ret < 0)
@@ -78,12 +80,13 @@ static void signal_handler(int sig)
 		break;
 	case SIGTERM:
 		log_message("terminate signal catched");
-		exit(0);
+		exit(EXIT_SUCCESS);
 		break;
 	}
 }
 
 int ftruncate(int fd, off_t length);
+
 void set_lock()
 {
     int fd = open(LOCK_FILE, O_RDWR | O_CREAT, LOCKMODE);
@@ -99,12 +102,14 @@ void set_lock()
     if (ftruncate(fd, 0) == -1)
         exit(errno);
     char str[16];
-    if (sprintf(str, "%d\n", getpid()) < 0)
+    if (snprintf(str, 16, "%d\n", getpid()) < 0)
         exit(ERROR_SPRINT);
     if (write(fd, str, sizeof(str)) == -1)
         exit(errno);
 }
+
 int getdtablesize(void);
+
 void daemonize()
 {
 	if (getppid() == 1) 
@@ -113,7 +118,7 @@ void daemonize()
 	if (i < 0) 
         exit(errno);
 	if (i > 0)
-        exit(0);
+        exit(EXIT_SUCCESS);
 	if (setsid() == -1)
         exit(errno);
     struct rlimit rl;
@@ -160,7 +165,7 @@ int set_socket(struct sockaddr_in address)
     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT
                 , &opt, sizeof(opt)) == -1)
         exit(errno);
-    if (bind(server_fd, (struct sockaddr*)&address, sizeof(address)) == -1)
+    if (bind(server_fd, (struct sockaddr *) &address, sizeof(address)) == -1)
         exit(errno);
     if (listen(server_fd, PENDING) == -1)
         exit(errno);
@@ -178,14 +183,14 @@ void log_ip(struct sockaddr_in client)
     if (inet_ntop(AF_INET, &ipAddr, ip, INET_ADDRSTRLEN) == NULL)
         exit(errno);
     char msg[INET_ADDRSTRLEN + 13];
-    int ret = sprintf(msg, "Client ip: %s", ip);
+    int ret = snprintf(msg, INET_ADDRSTRLEN + 13, "Client ip: %s", ip);
     if (ret < 0)
         exit(ERROR_SPRINT);
     log_message(msg);
     free(ip);
 }
 
-void set_file_name(char *name)
+void set_file_name(const char *name)
 {
     file_name = name;    
 }
@@ -196,29 +201,29 @@ void update_size()
     file_size = stat(file_name, &stt) == -1 ? -1L : stt.st_size;
 }
 
-void dialog(int next)
+int dialog(int next)
 {
     if (next == -1)
-        exit(errno);
+        return errno;
     char buffer[SOCK_BUF];
     if (read(next, buffer, SOCK_BUF - 1) == -1)
-        exit(errno);
-    int blen = sizeof(buffer);
-    char msg[blen + 16];
-    if (sprintf(msg, "Query received: %s", buffer) < 0)
-        exit(ERROR_SPRINT);
+        return errno;
+    char msg[SOCK_BUF + 16];
+    if (snprintf(msg, SOCK_BUF + 16, "Query received: %s", buffer) < 0)
+        return ERROR_SPRINT;
     log_message(msg);
     char resp[RESP_LEN];
     int ret;
     if (file_size == -1L)
-        ret = sprintf(resp, "File %s access error", file_name);
+        ret = snprintf(resp, RESP_LEN, "File %s access error", file_name);
     else
-        ret = sprintf(resp, "File %s has size %ld", file_name, file_size);
+        ret = snprintf(resp, RESP_LEN, "File %s has size %ld", file_name, file_size);
     if (ret < 0)
-        exit(ERROR_SPRINT);
+        return ERROR_SPRINT;
     log_message(resp);
     if (send(next, resp, strlen(resp) + 1, 0) == -1)
-        exit(errno);
+        return errno;
     if (close(next) == -1)
-        exit(errno);
+        return errno;
+    return EXIT_SUCCESS;
 }

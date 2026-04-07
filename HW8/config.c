@@ -6,7 +6,7 @@
 
 #include "config.h"
 
-struct Params get_params(char *cfg_name) 
+struct Params get_params(const char *cfg_name) 
 {
     cfg_opt_t opts[] = {
         CFG_STR("file", DEFAULT_NAME, CFGF_NONE),
