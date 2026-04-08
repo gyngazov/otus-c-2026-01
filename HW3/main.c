@@ -7,12 +7,12 @@ void print_int(long num)
     fflush(0);
 }
 
-void m(long two)
+void m(long *two)
 {
-    if (i == 0)
+    if (two == NULL)
         return;
-    print_int(i);
-    m(i + 1);
+    print_int(*two);
+    m(two + 1);
 }
 
 long *add_element(long a, long *b)
@@ -22,8 +22,23 @@ long *add_element(long a, long *b)
     if (two == NULL)
         abort();
     *two = a;
-    two + 1 = b;
+    two++;
+    two = b;
     return two;
+}
+
+long *p(long *x)
+{
+    return ++x;
+}
+
+void f(long *two)
+{
+    if (two == NULL)
+        return;
+    if (p(two) != NULL)
+        add_element(*two, NULL);
+    f(two + 1);
 }
 
 int main(int argc, char **argv)
@@ -34,6 +49,12 @@ int main(int argc, char **argv)
     two = NULL;
     for (int i = data_length - 1; i > 0; i--)
         two = add_element(data[i], two);
-    
+    long *copy;
+    copy = two;
+    m(two);
+    puts("\0");
+    f(copy);
+    m(copy);
+    puts("\0");
     return 0;
 }
