@@ -22,8 +22,9 @@ long *add_element(long a, long *b)
     if (two == NULL)
         abort();
     *two = a;
-    two++;
-    two = b;
+    long *sec;
+    sec = two + 1;
+    sec = b;
     return two;
 }
 
