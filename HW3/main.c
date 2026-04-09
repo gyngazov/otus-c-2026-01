@@ -1,61 +1,62 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+struct Node {
+    long val;
+    struct Node *next;
+};
+
 void print_int(long num)
 {
     printf("%ld \0", num);
     fflush(0);
 }
-
-void m(long *two)
+// печать от корня
+void m(struct Node *node)
 {
-    if (two == NULL)
+    if (node == NULL)
         return;
-    print_int(*two);
-    m(two + 1);
+    print_int(node->val);
+    m(node->next);
 }
-
-long *add_element(long a, long *b)
+// добавление головы к хвосту
+struct Node *add_element(long new, struct Node *tail)
 {
-    long *two;
-    two = (long *) malloc(2 * sizeof(long));
-    if (two == NULL)
+    struct Node *node;
+    node = (struct Node *) malloc(sizeof(struct Node));
+    if (node == NULL)
         abort();
-    *two = a;
-    long *sec;
-    sec = two + 1;
-    sec = b;
-    return two;
+    node->val = new;
+    node->next = tail;
+    return node;
+}
+// четность
+long p(long x)
+{
+    return x & 1;
 }
 
-long *p(long *x)
+void f(struct Node *node) // сделать две перем
 {
-    return ++x;
-}
-
-void f(long *two)
-{
-    if (two == NULL)
+    if (node == NULL)
         return;
-    if (p(two) != NULL)
-        add_element(*two, NULL);
-    f(two + 1);
+    if (p(node->val) != 0L)
+        node = add_element(node->val, NULL);
+    f(node->next);
 }
 
 int main(int argc, char **argv)
 {
-    long data[] = {4, 8, 15, 16, 23, 42};
+    long data[] = {4L, 8L, 15L, 16L, 23L, 42L};
     int data_length = sizeof(data) / 8;
-    long *two;
-    two = NULL;
-    for (int i = data_length - 1; i > 0; i--)
-        two = add_element(data[i], two);
-    long *copy;
-    copy = two;
-    m(two);
+    struct Node *node = NULL;
+    for (int i = data_length - 1; i >= 0; i--)
+        node = add_element(data[i], node);
+    struct Node *start = node;
     puts("\0");
-    f(copy);
-    m(copy);
+    m(node);
+    f(start);
+    m(start);
     puts("\0");
     return 0;
 }
