@@ -1,14 +1,12 @@
-AS = nasm  # NOTE: yasm тоже подойдёт
+TARGET=c-asm
+CFLAGS=-Wall -Wextra -Wpedantic -std=c11
+OBJS=main.o
 
-all: asm-prog
+%.o : %.c
+	gcc -c $(CFLAGS) $< -o $@
 
-asm-prog: main.o
-	$(CC) -g -no-pie $^ -o $@
-
-main.o: main.asm
-	$(AS) -g -felf64 $^
+${TARGET}: ${OBJS}
+	gcc -o ${TARGET} $^ ${LFLAGS}
 
 clean:
-	rm -f asm-prog *.o core
-
-.PHONY: clean
+	rm -f ${OBJS} ${TARGET}

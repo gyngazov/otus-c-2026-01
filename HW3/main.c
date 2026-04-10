@@ -6,19 +6,30 @@ struct Node {
     struct Node *next;
 };
 
-void print_int(long num)
+// осв. память у списка
+void free_nodes(struct Node *node) 
 {
-    printf("%ld \0", num);
+    if (node == NULL)
+        return;
+    free_nodes(node->next);
+    free(node);
+}
+
+void print_int(struct Node *node)
+{
+    printf("%ld ", node->val);
     fflush(0);
 }
+
 // печать от корня
 void m(struct Node *node)
 {
     if (node == NULL)
         return;
-    print_int(node->val);
+    print_int(node);
     m(node->next);
 }
+
 // добавление головы к хвосту
 struct Node *add_element(long new, struct Node *tail)
 {
@@ -30,33 +41,38 @@ struct Node *add_element(long new, struct Node *tail)
     node->next = tail;
     return node;
 }
+
 // четность
 long p(long x)
 {
     return x & 1;
 }
-
-void f(struct Node *node) // сделать две перем
+// сбор списка с нечетными элементами
+struct Node *f(struct Node *node, struct Node *odd)
 {
     if (node == NULL)
-        return;
-    if (p(node->val) != 0L)
-        node = add_element(node->val, NULL);
-    f(node->next);
+        return odd;
+    long nv = node->val;
+    if (p(nv))
+        odd = add_element(nv, odd);
+    f(node->next, odd);
 }
 
-int main(int argc, char **argv)
+int main()
 {
     long data[] = {4L, 8L, 15L, 16L, 23L, 42L};
     int data_length = sizeof(data) / 8;
     struct Node *node = NULL;
     for (int i = data_length - 1; i >= 0; i--)
         node = add_element(data[i], node);
-    struct Node *start = node;
-    puts("\0");
     m(node);
-    f(start);
-    m(start);
     puts("\0");
+    struct Node *odd = NULL;
+    odd = f(node, odd);
+    m(odd);
+    puts("\0");
+    // добавлено. нет в main.asm
+    free_nodes(node);
+    free_nodes(odd);
     return 0;
 }
