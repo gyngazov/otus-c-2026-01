@@ -2,18 +2,17 @@
 #include <string.h>
 #include <stdlib.h>
 
+
 #define BUF_LEN 4096
-#define REF_LEN 1024
 
 struct LogLine {
     int size;
-    char url[BUF_LEN];
-    char ref[BUF_LEN];
+    char *url;
+    char *ref;
 };
 
-int get_load(char *buf, int len);
-struct LogLine parse_line(char *buf);
-int shift(char *buf, int i, int limit);
+struct LogLine parse_line(const char *buf);
+int shift(const char *buf, int i, const int limit);
 
 int main(int argc, char **argv)
 {
@@ -28,51 +27,42 @@ int main(int argc, char **argv)
     int l;
     struct LogLine ll;
 
-    while (fgets(buf, BUF_LEN, fp) != NULL)
+    while (fgets(buf, BUF_LEN, fp) != NULL) {
         ll = parse_line(buf);
+    }
     return 0;
 }
 
-int get_load(char *buf, int len)
-{
-    int blanks = 0;
-    int t = 0;
-    char c;
-    for (int i = 0; i < len; i++) {
-        c = buf[i];
-        if (c == ' ')
-            blanks += 1;
-        else if (blanks == 9)
-            t = t * 10 + (c - '0');        
-        else if (blanks == 10)
-            break;
-    }
-    return t;
-}
 
-struct LogLine parse_line(char *buf)
+struct LogLine parse_line(const char *buf)
 {
-    int len = strlen(buf);
-    int start_url = shift(buf, 0, len);
-    int end_url = shift(buf, start_url, len) - 2;
+    const int len = strlen(buf);
+    const int start_url = shift(buf, 0, len);
+    const int end_url = shift(buf, start_url, len) - 2;
     int i = end_url + 7;
     int t = 0;
-    while(buf[i] != ' ') {
-        t = t * 10 + (buf[i] - '0');
-        i++;
-    }
-    int start_ref = i + 2;
-    int end_ref = shift(buf, start_ref, len) - 2;
+    while(buf[i] != ' ')
+        t = t * 10 + (buf[i++] - '0');
+    const int start_ref = i + 2;
+    const int end_ref = shift(buf, start_ref, len) - 2;
     struct LogLine ll;
     ll.size = t;
-    strncpy(ll.url, buf + start_url, end_url - start_url + 1);
-    strncpy(ll.ref, buf + start_ref, end_ref - start_ref + 1);
-    printf("%d %s %s\n", ll.size, ll.url, ll.ref);
+    char buf_url[end_url - start_url + 2];
+    char buf_ref[end_ref - start_ref + 2];
+    memcpy(buf_url, buf + start_url, end_url - start_url + 1);
+    memcpy(buf_ref, buf + start_ref, end_ref - start_ref + 1);
+    buf_url[end_url - start_url + 1] = '\0';
+    buf_ref[end_ref - start_ref + 1] = '\0';
+    ll.url = buf_url;
+    ll.ref = buf_ref;
+    
+    printf("|%d|%s|%s|\n", ll.size, ll.url, ll.ref);
     return ll;
 }
 
-int shift(char *buf, int i, int limit)
+int shift(const char *buf, int i, const int limit)
 {
     while(i < limit && buf[i++] != '"');
     return i;
 }
+
