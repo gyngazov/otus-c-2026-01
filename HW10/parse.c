@@ -47,12 +47,14 @@ struct LogLine parse_line(const char *buf)
     const int end_ref = shift(buf, start_ref, len) - 2;
     struct LogLine ll;
     ll.size = t;
-    char buf_url[end_url - start_url + 2];
-    char buf_ref[end_ref - start_ref + 2];
-    memcpy(buf_url, buf + start_url, end_url - start_url + 1);
-    memcpy(buf_ref, buf + start_ref, end_ref - start_ref + 1);
-    buf_url[end_url - start_url + 1] = '\0';
-    buf_ref[end_ref - start_ref + 1] = '\0';
+    int u = end_url - start_url + 1;
+    int r = end_ref - start_ref + 1;
+    char buf_url[u + 1];
+    char buf_ref[r + 1];
+    memcpy(buf_url, buf + start_url, u);
+    memcpy(buf_ref, buf + start_ref, r);
+    buf_url[u] = '\0';
+    buf_ref[r] = '\0';
     ll.url = buf_url;
     ll.ref = buf_ref;
     
