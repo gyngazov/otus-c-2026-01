@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+
 struct Hit {
     char url[1024];
     int rate;
@@ -8,8 +9,10 @@ struct Hit {
 int compare_hits(const void* a, const void* b) {
     const struct Hit *h1 = (struct Hit *) a;
     const struct Hit *h2 = (struct Hit *) b;
-    if (h1->rate > h2->rate) return -1;
-    if (h1->rate < h2->rate) return 1;
+    if (h1->rate > h2->rate) 
+        return -1;
+    if (h1->rate < h2->rate) 
+        return 1;
     return 0;
 }
 

@@ -2,36 +2,26 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "parse.h"
 
-#define BUF_LEN 4096
+static int shift(const char *buf, int i, const int limit);
 
-struct LogLine {
-    int size;
-    char *url;
-    char *ref;
-};
-
-struct LogLine parse_line(const char *buf);
-int shift(const char *buf, int i, const int limit);
-
-int main(int argc, char **argv)
-{
-    if (argc != 2) {
-        printf("no file name\n");
-        return EXIT_FAILURE;
-    }
-    FILE *fp;
-    fp = fopen(argv[1], "r");
-    char buf[BUF_LEN];
-    int sum = 0;
-    int l;
-    struct LogLine ll;
-
-    while (fgets(buf, BUF_LEN, fp) != NULL) {
-        ll = parse_line(buf);
-    }
-    return 0;
-}
+// int main(int argc, char **argv)
+// {
+//     if (argc != 2) {
+//         printf("no file name\n");
+//         return EXIT_FAILURE;
+//     }
+//     FILE *fp;
+//     fp = fopen(argv[1], "r");
+//     char buf[BUF_LEN];
+//     struct LogLine ll;
+//     while (fgets(buf, BUF_LEN, fp) != NULL) {
+//         ll = parse_line(buf);
+//     }
+//     return 0;
+//     fclose(fp);
+// }
 
 
 struct LogLine parse_line(const char *buf)
@@ -47,8 +37,8 @@ struct LogLine parse_line(const char *buf)
     const int end_ref = shift(buf, start_ref, len) - 2;
     struct LogLine ll;
     ll.size = t;
-    int u = end_url - start_url + 1;
-    int r = end_ref - start_ref + 1;
+    const int u = end_url - start_url + 1;
+    const int r = end_ref - start_ref + 1;
     char buf_url[u + 1];
     char buf_ref[r + 1];
     memcpy(buf_url, buf + start_url, u);
