@@ -1,0 +1,14 @@
+TGT=test
+LFLAGS=-lglib-2.0
+CFLAGS=-I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include
+
+OBJS=test.o hash.o
+
+%.o : %.c
+	gcc -c $(CFLAGS) $< -o $@
+
+${TGT}: ${OBJS}
+	gcc -o ${TGT} $^ ${LFLAGS}
+
+clean:
+	rm -f ${OBJS} ${TGT} ./a.out

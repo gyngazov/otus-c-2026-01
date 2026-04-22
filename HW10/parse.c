@@ -48,7 +48,7 @@ struct LogLine parse_line(const char *buf)
     ll.url = buf_url;
     ll.ref = buf_ref;
     
-    printf("|%d|%s|%s|\n", ll.size, ll.url, ll.ref);
+    //printf("|%d|%s|%s|\n", ll.size, ll.url, ll.ref);
     return ll;
 }
 

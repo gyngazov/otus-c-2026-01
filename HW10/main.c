@@ -15,14 +15,15 @@ int main(int argc, char **argv)
     fp = fopen(argv[1], "r");
     char buf[BUF_LEN];
     struct LogLine ll;
-    init();
+    GHashTable *h = init();
     while (fgets(buf, BUF_LEN, fp) != NULL) {
         ll = parse_line(buf);
-        inc(ll.ref);
+        inc(h, ll.ref, 1);
     }
+    view(h);
     fclose(fp);
-    get_top_n(10);
-    destroy();
+    //get_top_n(h, 10);
+    destroy(h);
 
     return 0;
     
