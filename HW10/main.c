@@ -14,17 +14,16 @@ int main(int argc, char **argv)
     FILE *fp;
     fp = fopen(argv[1], "r");
     char buf[BUF_LEN];
-    struct LogLine ll;
+    struct LogLine *ll;
     GHashTable *h = init();
     while (fgets(buf, BUF_LEN, fp) != NULL) {
         ll = parse_line(buf);
-        inc(h, ll.ref, 1);
+        printf("ref: %s buf: %s\n", ll->ref, buf);
+        inc(h, ll->ref, 1);
     }
-    view(h);
     fclose(fp);
-    //get_top_n(h, 10);
+    view(h);
     destroy(h);
-
     return 0;
     
 }

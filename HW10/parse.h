@@ -6,4 +6,4 @@ struct LogLine {
     char *ref;
 };
 
-struct LogLine parse_line(const char *buf);
+struct LogLine *parse_line(const char *buf);

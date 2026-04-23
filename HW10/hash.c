@@ -11,7 +11,10 @@ struct Hit {
     int rate;       // частота или суммарный трафик по урлу
 };
 
-static int is_empty(GHashTable *hash);
+static int is_empty(GHashTable *hash)
+{
+    return (hash == NULL || g_hash_table_size(hash) == 0) ? 1 : 0;
+}
 
 // компаратор по убыванию
 static int compare_hits(const void* a, const void* b) {
@@ -46,6 +49,7 @@ void inc(GHashTable *hash, char *key, const int plus)
     if (value != NULL) {
         new += GPOINTER_TO_INT(value);
     }
+    printf("key: %s\n", key);
     g_hash_table_insert(hash, ins, GINT_TO_POINTER(new));
 }
 
@@ -73,10 +77,7 @@ void get_top_n(GHashTable *hash, const int n)
         printf("%d: %s -> %d\n", i + 1, hits[i].url, hits[i].rate);
 }
 
-/*
-добавить хт new в хт hash
-заодно посчитать итоговую сууму
-*/
+// добавить хт new в хт hash
 void merge(GHashTable *hash, GHashTable *new)
 {
     if (is_empty(hash) && is_empty(new))
@@ -92,6 +93,7 @@ void merge(GHashTable *hash, GHashTable *new)
     free(keys);
 }
 
+// сумма всех значений
 int sum(GHashTable *hash)
 {
     if (is_empty(hash))
@@ -123,7 +125,3 @@ void view(GHashTable *hash)
     free(keys);
 }
 
-static int is_empty(GHashTable *hash)
-{
-    return (hash == NULL || g_hash_table_size(hash) == 0) ? 1 : 0;
-}
