@@ -2,9 +2,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 // нужен одинаковый размер для qsort
-#define URL_LEN 1024
+#define URL_LEN 4096
+#define EHASHTAB -11
+#define PRCO printf("%d\n", __COUNTER__);
+
+static gpointer *ht_keys;
+static int ht_size;
 
 struct Hit {
     char url[URL_LEN];
@@ -29,11 +35,24 @@ static int compare_hits(const void* a, const void* b) {
 
 GHashTable *init()
 {
-    return g_hash_table_new(g_str_hash, g_str_equal);
+    GHashTable *ght = g_hash_table_new(g_str_hash, g_str_equal);
+    if (ght == NULL) {
+        printf("Не создалась хеш-таблица.\n");
+        exit(EHASHTAB);
+    }
+    return ght;
+}
+
+void set_keys(GHashTable *hash)
+{
+    ht_keys = g_hash_table_get_keys_as_array(hash, NULL);
+    ht_size = g_hash_table_size(hash);
 }
 
 void destroy(GHashTable *hash)
 {
+    set_keys(hash);
+    for (int i = 0; i < ht_size; free(ht_keys[i++]));
     g_hash_table_destroy(hash);
 }
 
@@ -43,13 +62,18 @@ void inc(GHashTable *hash, char *key, const int plus)
 {
     if (hash == NULL || plus <= 0 || strlen(key) == 1)
         return;
+    PRCO
     gpointer value = g_hash_table_lookup(hash, key);
+    PRCO
     char *ins = g_strdup(key);
-    int new = plus;
-    if (value != NULL) {
-        new += GPOINTER_TO_INT(value);
+    PRCO
+    if (ins == NULL) {
+        perror("Не выделена память");
+        exit(errno);
     }
-    printf("key: %s\n", key);
+    int new = plus;
+    if (value != NULL)
+        new += GPOINTER_TO_INT(value);
     g_hash_table_insert(hash, ins, GINT_TO_POINTER(new));
 }
 
@@ -59,20 +83,19 @@ void get_top_n(GHashTable *hash, const int n)
 {
     if (is_empty(hash) || n <= 0)
         return;
-    gpointer *keys = g_hash_table_get_keys_as_array(hash, NULL);
-    const int size = g_hash_table_size(hash);
+    set_keys(hash);
     gpointer value;
     char *key;
-    struct Hit hits[size];
-    for (int i = 0; i < size; i++) {
-        key = (char *) keys[i];
+    struct Hit hits[ht_size];
+    for (int i = 0; i < ht_size; i++) {
+        key = (char *) ht_keys[i];
         value = g_hash_table_lookup(hash, key);
         memcpy(hits[i].url, key, strlen(key) + 1);
         hits[i].rate = GPOINTER_TO_INT(value);
     }
-    free(keys);
-    qsort(hits, size, sizeof(struct Hit), compare_hits);
-    const int min = size > n ? n : size;
+    free(ht_keys);
+    qsort(hits, ht_size, sizeof(struct Hit), compare_hits);
+    const int min = ht_size > n ? n : ht_size;
     for (int i = 0; i < min; i++)
         printf("%d: %s -> %d\n", i + 1, hits[i].url, hits[i].rate);
 }
@@ -82,15 +105,14 @@ void merge(GHashTable *hash, GHashTable *new)
 {
     if (is_empty(hash) && is_empty(new))
         return;
-    gpointer *keys = g_hash_table_get_keys_as_array(new, NULL);
-    const int size = g_hash_table_size(new);
+    set_keys(new);
     gpointer key, v1;
-    for (int i = 0; i < size; i++) {
-        key = keys[i];
+    for (int i = 0; i < ht_size; i++) {
+        key = ht_keys[i];
         v1 = g_hash_table_lookup(new, key);
         inc(hash, key, GPOINTER_TO_INT(v1));
     }
-    free(keys);
+    free(ht_keys);
 }
 
 // сумма всех значений
@@ -98,15 +120,14 @@ int sum(GHashTable *hash)
 {
     if (is_empty(hash))
         return 0;
-    gpointer *keys = g_hash_table_get_keys_as_array(hash, NULL);
-    const int size = g_hash_table_size(hash);
+    set_keys(hash);
     gpointer val;
     int sum = 0;
-    for (int i = 0; i < size; i++) {
-        val = g_hash_table_lookup(hash, keys[i]);
+    for (int i = 0; i < ht_size; i++) {
+        val = g_hash_table_lookup(hash, ht_keys[i]);
         sum += GPOINTER_TO_INT(val);
     }
-    free(keys);
+    free(ht_keys);
     return sum;
 }
 
@@ -114,14 +135,13 @@ void view(GHashTable *hash)
 {
     if (is_empty(hash))
         return;
-    gpointer *keys = g_hash_table_get_keys_as_array(hash, NULL);
-    const int size = g_hash_table_size(hash);
+    set_keys(hash);
     gpointer val;
-    printf("size: %d\n", size);
-    for (int i = 0; i < size; i++) {
-        val = g_hash_table_lookup(hash, keys[i]);
-        printf("%s -> %d\n", (char *) keys[i], GPOINTER_TO_INT(val));
+    printf("size: %d\n", ht_size);
+    for (int i = 0; i < ht_size; i++) {
+        val = g_hash_table_lookup(hash, ht_keys[i]);
+        printf("%s -> %d\n", (char *) ht_keys[i], GPOINTER_TO_INT(val));
     }
-    free(keys);
+    free(ht_keys);
 }
 

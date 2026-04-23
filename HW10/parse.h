@@ -1,4 +1,4 @@
-#define BUF_LEN 4096
+#define BUF_LEN 8192
 
 struct LogLine {
     int size;
@@ -7,3 +7,5 @@ struct LogLine {
 };
 
 struct LogLine *parse_line(const char *buf);
+
+#define PRCO printf("%d\n", __COUNTER__);
