@@ -1,38 +1,67 @@
-#include <glib.h>
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <dirent.h>
 
-#include "hash.h"
+struct Div {
+    int nn;
+    FILE **fp;
+};
+
+struct Div *divide(const int threads_n, const char *dir_name, int *n);
 
 void main(int argc, char **argv)
-{
-    GHashTable *h1 = init();
-    GHashTable *h2 = init();
-
-    inc(h1, "sed", 3);
-    inc(h2, "sed", 7);
-    inc(h1, "dfg", 2);
-    inc(h2, "dfg", 9);
-    inc(h1, "xsd", 4);
-    inc(h2, "njk", 5);
-    get_top_n(h1, 3);
-    get_top_n(h2, 3);
-    merge(h1, h2);
-    get_top_n(h1, 4);
-    printf("sum: %d\n", sum(h1));
-    destroy(h1);
-    destroy(h2);
+{   
+    int n;
+    struct Div *d = divide(12, "xs", &n);
+    
+    if (d == NULL)
+        exit(EXIT_FAILURE);
+    for (int i = 0; i < n; i++)
+        printf("%d ", (d + i)->nn);
+        
 }
 
-void divide(const int threads_n, const int files_n)
+struct Div *divide(const int threads_n, const char *dir_name, int *m)
 {
-    const int base = files_n / threads_n;
-    const int rest = files_n % threads_n;
-    const int n = threads_n >= files_n ? files_n : threads_n;
-    int distr[n];
+    DIR *dir;
+    struct dirent *entry;
+
+    dir = opendir(dir_name);
+    if (dir == NULL) {
+        perror("Failed to open directory");
+        return 1;
+    }
+    int k = 0;
+    while (readdir(dir) != NULL)
+        k++;
+    if (k == 0)
+        return NULL;
+//         printf("Name: %s, Type: %d
+// ", entry->d_name, entry->d_type);
+    
+
+    
+    const int base = k / threads_n;
+    const int rest = k % threads_n;
+    const int n = threads_n >= k ? k : threads_n;
+    *m = n;
+    struct Div *divs = (struct Div *) malloc(n * sizeof(struct Div));
+    if (divs == NULL) {
+        printf("Нет памяти\n");
+        return NULL;
+    }
     int i = 0;
-    for (; i < rest; distr[i++] = base + 1);
-    for (; i < n; distr[i++] = base);
-    for (int i = 0; i < n; i++)
-        printf("%d ", distr[i]);
+    for (; i < rest; i++) {
+        k = base + 1;
+        while (k-- > 0) {
+            entry = readdir(dir);
+            
+        }
+    }
+        (divs + i)->nn = base + 1;
+    for (; i < n; i++)
+        (divs + i)->nn = base;
+    closedir(dir);
+    return divs;
 }

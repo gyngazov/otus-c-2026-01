@@ -15,7 +15,9 @@ struct Cache {
     GHashTable *refs;
 };
 
-void * worker(void * arg)
+void divide(const int threads_n, const int files_n);
+
+void *worker(void * arg)
 {
     struct Cache *cache = (struct Cache *) arg;
     cache->tid = pthread_self();
@@ -65,5 +67,19 @@ int main(int argc, char **argv)
             printf("A slave thread returned: %d %lu \n", i, (long*)res);
     }
     return EXIT_SUCCESS;
+}
+// распределить файлы по потокам
+// не более одного потока на файл
+void divide(const int threads_n, const int files_n)
+{
+    const int base = files_n / threads_n;
+    const int rest = files_n % threads_n;
+    const int n = threads_n >= files_n ? files_n : threads_n;
+    int distr[n];
+    int i = 0;
+    for (; i < rest; distr[i++] = base + 1);
+    for (; i < n; distr[i++] = base);
+    for (int i = 0; i < n; i++)
+        printf("%d ", distr[i]);
 }
 
