@@ -83,6 +83,15 @@ struct Cache *divide(const int threads_n, const char *dir_name, int *m)
     return divs;
 }
 
+void free_thread_list(struct Cache *divs, int n)
+{
+    for (int i = 0; i < n; i++) {
+        free(divs[i]->files);
+        destroy(divs[i]->queries);
+        destroy(divs[i]->refs);
+    }
+}
+
 // штук файлов в папке
 static int count_files(const char *dir_name)
 {

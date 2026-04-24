@@ -23,6 +23,7 @@ int main(int argc, char **argv)
         for (int k = 0; k < len; k++)
             printf("%s ", divs[i].files[k]);
     }
+    free_thread_list(divs, n);
     // if (argc != 3) {
     //     printf("usage: %s {logs_dir} {number_of_threads}");
     //     return EXIT_FAILURE;
