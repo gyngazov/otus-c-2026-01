@@ -3,35 +3,42 @@
 #include <stdlib.h>
 #include <dirent.h>
 #include <errno.h>
+#include <glib.h>
 
-struct Div {
-    int n;
-    char **files;
-};
+#include "hash.h"
+#include "parse.h"
 
-struct Div *divide(const int threads_n, const char *dir_name, int *n);
-static int count_files(const char *dir_name);
-static char **get_files(int num_files, DIR *dir);
 
-void main(int argc, char **argv)
-{   
-    int n;
-    struct Div *divs = divide(3, "xs", &n);
-    
-    if (divs == NULL)
-        exit(EXIT_FAILURE);
-    int len;
-    for (int i = 0; i < n; i++) {
-        len = divs[i].n;
-        printf("%d: n->%d fsl->", i, len);
-        for (int k = 0; k < len; k++)
-            printf("%s ", divs[i].files[k]);
+
+void *worker(void * arg)
+{
+    struct Cache *cache = (struct Cache *) arg;
+    cache->tid = pthread_self();
+    FILE *fp;
+    char buf[BUF_LEN];
+    struct LogLine *ll;
+    char *fname;
+
+    for (int i = 0; i < cache->num; i++) {
+        fname = cache->files[i];
+        fp = fopen(fname, "r");
+        if (fp == NULL) {
+            perror("Не удалось открыть файл");
+            return NULL;
+        }
+        while (fgets(buf, BUF_LEN, fp) != NULL) {
+            ll = parse_line(buf);
+            inc(cache->refs, ll->ref, 1);
+            inc(cache->queries, ll->url, ll->size);
+        }
+        fclose(fp);
     }
-        
+    return((void *)cache);
 }
+
 // тредлист
 // распределить файлы по потокам
-struct Div *divide(const int threads_n, const char *dir_name, int *m)
+struct Cache *divide(const int threads_n, const char *dir_name, int *m)
 {
     DIR *dir;
     struct dirent *entry;
@@ -45,7 +52,7 @@ struct Div *divide(const int threads_n, const char *dir_name, int *m)
     const int rest = k % threads_n;
     const int n = threads_n >= k ? k : threads_n;
     *m = n;
-    struct Div *divs = (struct Div *) malloc(n * sizeof(struct Div));
+    struct Cache *divs = (struct Cache *) malloc(n * sizeof(struct Cache));
     if (divs == NULL) {
         printf("Нет памяти\n");
         return NULL;
@@ -58,13 +65,18 @@ struct Div *divide(const int threads_n, const char *dir_name, int *m)
     readdir(dir);
     readdir(dir);
     int i = 0;
+    GHashTable *hash;
     for (; i < rest; i++) {
         divs[i].n = base + 1;
         divs[i].files = get_files(base + 1, dir);
+        divs[i].queries = init();
+        divs[i].refs = init();
     }
     for (; i < n; i++) {
         divs[i].n = base;
         divs[i].files = get_files(base, dir);
+        divs[i].queries = init();
+        divs[i].refs = init();
     }
 
     closedir(dir);
