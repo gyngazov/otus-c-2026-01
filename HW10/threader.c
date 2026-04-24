@@ -4,13 +4,36 @@
 #include <errno.h>
 #include <unistd.h>
 
-void * thr_fcn(void * arg)
+#include "hash.h"
+#include "parse.h"
+
+struct Cache {
+    int num;      
+    pthread_t tid;         
+    FILE **files; 
+    GHashTable *queries;
+    GHashTable *refs;
+};
+
+void * worker(void * arg)
 {
-    pthread_t tid = pthread_self();
-    printf("A slave thread: id=");
-    printf("%lu \n", tid);
-    return((void *)tid);
+    struct Cache *cache = (struct Cache *) arg;
+    cache->tid = pthread_self();
+    FILE *fp;
+    char buf[BUF_LEN];
+    struct LogLine *ll;
+
+    for (int i = 0; i < cache->num; i++) {
+        fp = cache->files + i;
+        while (fgets(buf, BUF_LEN, fp) != NULL) {
+            ll = parse_line(buf);
+            inc(cache->refs, ll->ref, 1);
+            inc(cache->queries, ll->url, ll->size);
+        }
+    }
+    return((void *)cache);
 }
+
 
 int main(int argc, char **argv)
 {
@@ -18,6 +41,7 @@ int main(int argc, char **argv)
     //     printf("usage: %s {logs_dir} {number_of_threads}");
     //     return EXIT_FAILURE;
     // }
+
     int n = 7;
     pthread_t thrds[n];
     int err;
@@ -42,5 +66,4 @@ int main(int argc, char **argv)
     }
     return EXIT_SUCCESS;
 }
-
 

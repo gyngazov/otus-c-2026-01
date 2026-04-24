@@ -21,7 +21,6 @@ static char *get_str(const char *buf, const int start, const int end)
     }
     memcpy(url, buf + start, len);
     *(url + len) = '\0';
-    printf("str: %s\n", url);
     return url;
 }
 
@@ -38,20 +37,17 @@ struct LogLine *parse_line(const char *buf)
     const int end_ref = shift(buf, start_ref, len) - 2;
     struct LogLine *ll = (struct LogLine *) malloc(sizeof(struct LogLine));
     ll->size = t;
-    // const int u = end_url - start_url + 1;
-    // const int r = end_ref - start_ref + 1;
-    // char *url = (char *) malloc(u + 1);
-    // memcpy(url, buf + start_url, u);
-    // *(url + u) = '\0';
     ll->url = get_str(buf, start_url, end_url);
-    // char *ref = (char *) malloc(r + 1);
-    // memcpy(ref, buf + start_ref, r);
-    // *(ref + r) = '\0';
-    // ll->ref = ref;
-    ll->url = get_str(buf, start_ref, end_ref);
+    ll->ref = get_str(buf, start_ref, end_ref);
     printf("|%d|%s|%s|\n", ll->size, ll->url, ll->ref);
     return ll;
 }
+
+    // const int u = end_url - start_url + 1;
+    // char *url = (char *) malloc(u + 1);
+    // memcpy(url, buf + start_url, u);
+    // *(url + u) = '\0';
+    // ll->url = url;
 
 
 

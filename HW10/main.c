@@ -6,6 +6,8 @@
 #include "hash.h"
 #include "parse.h"
 
+
+
 int main(int argc, char **argv)
 {
     if (argc != 2) {
@@ -23,11 +25,10 @@ int main(int argc, char **argv)
     GHashTable *h = init();
     while (fgets(buf, BUF_LEN, fp) != NULL) {
         ll = parse_line(buf);
-        PRCO
         inc(h, ll->ref, 1);
     }
     fclose(fp);
-    get_top_n(h, 10);
+    get_top(h);
     printf("s=%d\n", sum(h));
     destroy(h);
     return 0;
