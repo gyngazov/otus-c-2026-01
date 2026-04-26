@@ -160,37 +160,45 @@ int main(int argc, char** argv) {
 
 	memset(buffer, 0, sizeof(buffer));
 
-	int len = 0;
-	while ((r = recv(sock_fd, &buffer[len], BUF_SIZE - len, 0)) > 0) {
-		if (string_has_substring((char*)buffer, len, r, string_to_find2)) {
-			break;
-		}
-		len += r;
+	//int len = 0;
+    int i = 1;
+	while ((r = recv(sock_fd, buffer, BUF_SIZE, 0)) > 0) {
+        buffer[r] = '\0';
+        if (strstr(buffer, "\n") != NULL)
+            break;
+    //while ((r = recv(sock_fd, &buffer[len], BUF_SIZE - len, 0)) > 0) {    
+		// if (string_has_substring((char*)buffer, len, r, string_to_find2)) {
+		// 	break;
+		// }
+		// len += r;
 	}
+    
+    printf("%s\n", strstr(buffer, "\n"));
+	// int found_new_line = 0;
+	// for (int i = 0; i < len + r; i++) {
+	// 	if (buffer[i] == '\n') {
+	// 		found_new_line = 1;
+	// 	}
 
-	int found_new_line = 0;
-	for (int i = 0; i < len + r; i++) {
-		if (buffer[i] == '\n') {
-			found_new_line = 1;
-		}
+	// 	if (i == len + r - 1) {
+	// 		continue;
+	// 	}
 
-		if (i == len + r - 1) {
-			continue;
-		}
+	// 	if (found_new_line) {
+	// 		putchar(buffer[i]);
+	// 		fflush(stdout);
+	// 	}
+	// }
 
-		if (found_new_line) {
-			putchar(buffer[i]);
-			fflush(stdout);
-		}
-	}
-
-	if (r < 0) {
-		perror("failed to receive a message from the host");
-		exit_code = EXIT_FAILURE;
-		goto clean_up;
-	}
+	// if (r < 0) {
+	// 	perror("failed to receive a message from the host");
+	// 	exit_code = EXIT_FAILURE;
+	// 	goto clean_up;
+	// }
 
 	clean_up:
+    shutdown(sock_fd, SHUT_RDWR);
 	close(sock_fd);
+    fflush(stdout);
 	return exit_code;
 }
