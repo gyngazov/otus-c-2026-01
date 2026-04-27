@@ -51,21 +51,21 @@ int main(int argc, char** argv)
     }
     if (optind < argc) {
         FAIL;
-                exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE);
     }
+    int exit_code = EXIT_SUCCESS;
+    char *err_msg = "";
 
     int sock_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (sock_fd < 0){
-        perror("socket");
-        exit(errno);
+    if (sock_fd < 0) {
+        err_msg = "Неудача сокета";
+        exit_code = errno;
+        goto err;
     }
 
     struct sockaddr_in sock_addr = {0};
     sock_addr.sin_family = AF_INET;
     sock_addr.sin_port = htons(PORT);
-
-    int exit_code = EXIT_SUCCESS;
-    char *err_msg = "";
 
     if (inet_pton(PF_INET, IP, &sock_addr.sin_addr) <= 0) {
         err_msg = "Не установлен адрес";
