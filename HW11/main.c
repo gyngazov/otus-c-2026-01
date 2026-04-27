@@ -107,7 +107,7 @@ int main(int argc, char** argv)
         exit_code = errno;
         goto err;
     }
-
+    close(sock_fd);
     return EXIT_SUCCESS;
 err:
     perror(err_msg);
