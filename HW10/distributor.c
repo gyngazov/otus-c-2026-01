@@ -7,7 +7,7 @@
 
 #include "hash.h"
 #include "parse.h"
-
+#include "distributor.h"
 
 
 void *worker(void * arg)
@@ -19,7 +19,7 @@ void *worker(void * arg)
     struct LogLine *ll;
     char *fname;
 
-    for (int i = 0; i < cache->num; i++) {
+    for (int i = 0; i < cache->n; i++) {
         fname = cache->files[i];
         fp = fopen(fname, "r");
         if (fp == NULL) {
@@ -34,62 +34,6 @@ void *worker(void * arg)
         fclose(fp);
     }
     return((void *)cache);
-}
-
-// тредлист
-// распределить файлы по потокам
-struct Cache *divide(const int threads_n, const char *dir_name, int *m)
-{
-    DIR *dir;
-    struct dirent *entry;
-
-    int k = count_files(dir_name);
-    if (k == -1) {
-        printf("Ошибка чтения папки\n");
-        return NULL;
-    }
-    const int base = k / threads_n;
-    const int rest = k % threads_n;
-    const int n = threads_n >= k ? k : threads_n;
-    *m = n;
-    struct Cache *divs = (struct Cache *) malloc(n * sizeof(struct Cache));
-    if (divs == NULL) {
-        printf("Нет памяти\n");
-        return NULL;
-    }
-    dir = opendir(dir_name);
-    if (dir == NULL) {
-        perror("Папка не доступна");
-        return NULL;
-    }
-    readdir(dir);
-    readdir(dir);
-    int i = 0;
-    GHashTable *hash;
-    for (; i < rest; i++) {
-        divs[i].n = base + 1;
-        divs[i].files = get_files(base + 1, dir);
-        divs[i].queries = init();
-        divs[i].refs = init();
-    }
-    for (; i < n; i++) {
-        divs[i].n = base;
-        divs[i].files = get_files(base, dir);
-        divs[i].queries = init();
-        divs[i].refs = init();
-    }
-
-    closedir(dir);
-    return divs;
-}
-
-void free_thread_list(struct Cache *divs, int n)
-{
-    for (int i = 0; i < n; i++) {
-        free(divs[i]->files);
-        destroy(divs[i]->queries);
-        destroy(divs[i]->refs);
-    }
 }
 
 // штук файлов в папке
@@ -124,6 +68,74 @@ static char **get_files(int num_files, DIR *dir)
         fls[j] = entry->d_name;
     } 
     return fls;
+}
+
+static void set_cache(struct Cache *div, int list_len, DIR *dir)
+{
+    div->n = list_len;
+    div->files = get_files(list_len, dir);
+    div->queries = init();
+    div->refs = init();    
+}
+
+// тредлист
+// распределить файлы по потокам
+struct Cache *divide(const int threads_n, const char *dir_name, int *m)
+{
+    DIR *dir;
+
+    int k = count_files(dir_name);
+    if (k == -1) {
+        printf("Ошибка чтения папки\n");
+        return NULL;
+    }
+    const int base = k / threads_n;
+    const int rest = k % threads_n;
+    const int n = threads_n >= k ? k : threads_n;
+    *m = n;
+    struct Cache *divs = (struct Cache *) malloc(n * sizeof(struct Cache));
+    if (divs == NULL) {
+        printf("Нет памяти\n");
+        return NULL;
+    }
+    dir = opendir(dir_name);
+    if (dir == NULL) {
+        perror("Папка не доступна");
+        return NULL;
+    }
+    readdir(dir);
+    readdir(dir);
+    int i = 0;
+    for (; i < rest; i++)
+        set_cache(&divs[i], base + 1, dir);
+    for (; i < n; i++) {
+        divs[i].n = base;
+        divs[i].files = get_files(base, dir);
+        divs[i].queries = init();
+        divs[i].refs = init();
+    }
+
+    if (closedir(dir) == -1) {
+        perror("Папка не закрывается");
+        return NULL;
+    };
+    return divs;
+}
+
+void free_thread_list(struct Cache *divs, const int n)
+{
+    for (int i = 0; i < n; i++) {
+        free(divs[i].files);
+        destroy(divs[i].queries);
+        destroy(divs[i].refs);
+    }
+}
+
+int read_dir(DIR *dir, struct entry *e)
+{
+    errno = 0;
+    e = readdir(dir);
+    return e == NULL && e != 0 ? errno : 0;
 }
 
 

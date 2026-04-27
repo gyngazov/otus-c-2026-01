@@ -10,20 +10,19 @@
 
 int main(int argc, char **argv)
 {
-
-    int n;
-    struct Cache *divs = divide(3, "xs", &n);
+    int m;
+    struct Cache *divs = divide(5, "xs", &m);
     
     if (divs == NULL)
         exit(EXIT_FAILURE);
     int len;
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < m; i++) {
         len = divs[i].n;
         printf("%d: n->%d fsl->", i, len);
         for (int k = 0; k < len; k++)
             printf("%s ", divs[i].files[k]);
     }
-    free_thread_list(divs, n);
+    free_thread_list(divs, m);
     // if (argc != 3) {
     //     printf("usage: %s {logs_dir} {number_of_threads}");
     //     return EXIT_FAILURE;
