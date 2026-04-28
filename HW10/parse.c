@@ -39,16 +39,9 @@ struct LogLine *parse_line(const char *buf)
     ll->size = t;
     ll->url = get_str(buf, start_url, end_url);
     ll->ref = get_str(buf, start_ref, end_ref);
-    printf("|%d|%s|%s|\n", ll->size, ll->url, ll->ref);
+    //printf("|%d|%s|%s|\n", ll->size, ll->url, ll->ref);
     return ll;
 }
-
-    // const int u = end_url - start_url + 1;
-    // char *url = (char *) malloc(u + 1);
-    // memcpy(url, buf + start_url, u);
-    // *(url + u) = '\0';
-    // ll->url = url;
-
 
 
 

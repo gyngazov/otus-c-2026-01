@@ -19,6 +19,7 @@ struct Hit {
 
 static int is_empty(GHashTable *hash)
 {
+    printf("2ise");
     return (hash == NULL || g_hash_table_size(hash) == 0) ? 1 : 0;
 }
 
@@ -51,8 +52,12 @@ GHashTable *init()
 
 static void set_keys(GHashTable *hash)
 {
+    printf("1sk\n");
     ht_keys = g_hash_table_get_keys_as_array(hash, NULL);
+    printf("2sk\n");
     ht_size = g_hash_table_size(hash);
+    printf("3sk\n");
+    printf("ht size: %d\n", ht_size);
 }
 
 void destroy(GHashTable *hash)
@@ -82,6 +87,7 @@ void inc(GHashTable *hash, char *key, const int plus)
 // с ключами
 void get_top(GHashTable *hash)
 {
+    printf("in get top\n");
     if (is_empty(hash))
         return;
     set_keys(hash);
@@ -90,6 +96,7 @@ void get_top(GHashTable *hash)
     struct Hit hits[ht_size];
     for (int i = 0; i < ht_size; i++) {
         key = (char *) ht_keys[i];
+        printf("key len: %ld\n", strlen(key));
         value = g_hash_table_lookup(hash, key);
         memcpy(hits[i].url, key, strlen(key) + 1);
         hits[i].rate = GPOINTER_TO_INT(value);

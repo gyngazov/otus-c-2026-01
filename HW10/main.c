@@ -29,10 +29,6 @@ int main(int argc, char **argv)
         i++;
     }
     closedir(dr);
-    for (int i = 0; i < n; i++)
-        printf("%s\n", files[i]);
-    
-
 
     pthread_t thrds[n];
     int err;
@@ -43,8 +39,11 @@ int main(int argc, char **argv)
             exit(errno);
         }
     }
+
     void *res;
-    
+    struct Caches *ret;
+    GHashTable *totalquer = init();
+    GHashTable *totalrefs = init();
     for (int i = 0; i < n; i++) {
         err = pthread_join(thrds[i], &res);
         if (err != 0)
@@ -52,14 +51,28 @@ int main(int argc, char **argv)
         else if ((int*)res == PTHREAD_CANCELED)
             printf("Поток отменен");
         else {
-            GHashTable *refs = (GHashTable *) res;
+            ret = (struct Caches *) res;
             printf("%d\n", i);
-            get_top(refs);
-            destroy(refs);
+            // get_top(ret->refs);
+            // get_top(ret->queries);
+            printf("11\n");
+            merge(totalrefs, ret->refs);
+            printf("12\n");
+            merge(totalquer, ret->queries);
+            printf("13\n");
+            // view(ret->queries);
+            // get_top(ret->refs);
+            // printf("view\n");
+            // get_top(ret->queries);
+            destroy(ret->refs);
+            destroy(ret->queries);
+            free(ret);
         }
     }
     for (int i = 0; i < n; i++)
         free(files[i]);
+    get_top(totalquer);
+    get_top(totalrefs);
     return EXIT_SUCCESS;
 }
 
