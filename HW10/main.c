@@ -10,46 +10,56 @@
 
 int main(int argc, char **argv)
 {
-    int m;
-    struct Cache *divs = divide(5, "xs", &m);
-    
-    if (divs == NULL)
-        exit(EXIT_FAILURE);
+    if (argc != 2)
+        return 1;
+    char *dir = argv[1];
+    int dir_len = strlen(dir);
+    int n = count_files(dir);
+    struct dirent *de;
+    DIR *dr = opendir(dir);
+    int i = 0;
     int len;
-    for (int i = 0; i < m; i++) {
-        len = divs[i].n;
-        printf("%d: n->%d fsl->", i, len);
-        for (int k = 0; k < len; k++)
-            printf("%s ", divs[i].files[k]);
+    char *files[n];
+    readdir(dr);
+    readdir(dr);
+    while ((de = readdir(dr)) != NULL) {
+        len = dir_len + 1 + strlen(de->d_name) + 1;
+        files[i] = (char *) malloc(len);
+        snprintf(files[i], len, "%s%s%s", dir, "/", de->d_name);
+        i++;
     }
-    free_thread_list(divs, m);
-    // if (argc != 3) {
-    //     printf("usage: %s {logs_dir} {number_of_threads}");
-    //     return EXIT_FAILURE;
-    // }
+    closedir(dr);
+    for (int i = 0; i < n; i++)
+        printf("%s\n", files[i]);
+    
 
-    // int n = 7;
-    // pthread_t thrds[n];
-    // int err;
-    // for (int i = 0; i < n; i++) {
-    //     err = pthread_create(&thrds[i], NULL, thr_fcn, NULL);
-    //     if (err != 0) {
-    //         perror("A new thread cannot be created");
-    //         return errno;
-    //     }
 
-    // }
-    // sleep(7);
-    // void *res;
-    // for (int i = 0; i < n; i++) {
-    //     err = pthread_join(thrds[i], &res);
-    //     if (err != 0)
-    //         printf("A slave thread is not joinable because it is detached. \n");
-    //     else if ((int*)res == PTHREAD_CANCELED)
-    //         printf("A slave thread was canceled");
-    //     else
-    //         printf("A slave thread returned: %d %lu \n", i, (long*)res);
-    // }
+    pthread_t thrds[n];
+    int err;
+    for (int i = 0; i < n; i++) {
+        err = pthread_create(&thrds[i], NULL, worker, files[i]);
+        if (err != 0) {
+            perror("A new thread cannot be created");
+            exit(errno);
+        }
+    }
+    void *res;
+    
+    for (int i = 0; i < n; i++) {
+        err = pthread_join(thrds[i], &res);
+        if (err != 0)
+            printf("Поток не завершается\n");
+        else if ((int*)res == PTHREAD_CANCELED)
+            printf("Поток отменен");
+        else {
+            GHashTable *refs = (GHashTable *) res;
+            printf("%d\n", i);
+            get_top(refs);
+            destroy(refs);
+        }
+    }
+    for (int i = 0; i < n; i++)
+        free(files[i]);
     return EXIT_SUCCESS;
 }
 

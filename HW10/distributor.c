@@ -12,32 +12,31 @@
 
 void *worker(void * arg)
 {
-    struct Cache *cache = (struct Cache *) arg;
-    cache->tid = pthread_self();
+    char *name = (char *) arg;
     FILE *fp;
     char buf[BUF_LEN];
     struct LogLine *ll;
-    char *fname;
 
-    for (int i = 0; i < cache->n; i++) {
-        fname = cache->files[i];
-        fp = fopen(fname, "r");
+        
+        printf("name: %s\n", name);
+        fp = fopen(name, "r");
         if (fp == NULL) {
             perror("Не удалось открыть файл");
             return NULL;
         }
+        GHashTable *refs = init();
+        GHashTable *qrys = init();
         while (fgets(buf, BUF_LEN, fp) != NULL) {
             ll = parse_line(buf);
-            inc(cache->refs, ll->ref, 1);
-            inc(cache->queries, ll->url, ll->size);
+            inc(refs, ll->ref, 1);
+            inc(qrys, ll->url, ll->size);
         }
         fclose(fp);
-    }
-    return((void *)cache);
+    return((void *)refs);
 }
 
 // штук файлов в папке
-static int count_files(const char *dir_name)
+int count_files(const char *dir_name)
 {
     DIR *dir;
     dir = opendir(dir_name);
@@ -46,16 +45,15 @@ static int count_files(const char *dir_name)
         return -1;
     }
     int k = 0;
-    readdir(dir); // .
-    readdir(dir); // ..
+    errno = 0;
     while (readdir(dir) != NULL)
         k++;
-    closedir(dir);
-    if (k == 0) {
-        printf("Нет файлов.\n");
+    if (errno != 0) {
+        perror("Не удалось прочесть папку");
         return -1;
-    }
-    return k;
+    }    
+    closedir(dir);
+    return k - 2; // без ./ ../
 }
 
 // список файлов для потока
@@ -69,7 +67,7 @@ static char **get_files(int num_files, DIR *dir)
     } 
     return fls;
 }
-
+// задать список файлов и кеши на поток
 static void set_cache(struct Cache *div, int list_len, DIR *dir)
 {
     div->n = list_len;
@@ -85,8 +83,8 @@ struct Cache *divide(const int threads_n, const char *dir_name, int *m)
     DIR *dir;
 
     int k = count_files(dir_name);
-    if (k == -1) {
-        printf("Ошибка чтения папки\n");
+    if (k <= 0) {
+        printf("Нет файлов или доступа\n");
         return NULL;
     }
     const int base = k / threads_n;
@@ -131,11 +129,6 @@ void free_thread_list(struct Cache *divs, const int n)
     }
 }
 
-int read_dir(DIR *dir, struct entry *e)
-{
-    errno = 0;
-    e = readdir(dir);
-    return e == NULL && e != 0 ? errno : 0;
-}
+
 
 

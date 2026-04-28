@@ -17,3 +17,4 @@ struct Cache {
 struct Cache *divide(const int threads_n, const char *dir_name, int *n);
 void *worker(void * arg);
 void free_thread_list(struct Cache *divs, const int n);
+int count_files(const char *dir_name);

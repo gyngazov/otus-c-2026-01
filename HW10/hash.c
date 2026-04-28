@@ -42,7 +42,6 @@ static void free_key(gpointer data)
 GHashTable *init()
 {
     GHashTable *ght = g_hash_table_new_full(g_str_hash, g_str_equal, (GDestroyNotify)free_key, NULL);
-    //GHashTable *ght = g_hash_table_new(g_str_hash, g_str_equal);
     if (ght == NULL) {
         printf("Не создалась хеш-таблица.\n");
         exit(EHASHTAB);
@@ -58,8 +57,6 @@ static void set_keys(GHashTable *hash)
 
 void destroy(GHashTable *hash)
 {
-    //set_keys(hash);
-    //for (int i = 0; i < ht_size; free(ht_keys[i++]));
     g_hash_table_destroy(hash);
 }
 
