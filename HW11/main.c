@@ -94,14 +94,22 @@ int main(int argc, char** argv)
         exit_code = errno;
         goto err;
     }
-
-    int r;
-	while ((r = recv(sock_fd, buffer, BUF_SIZE, 0)) > 0) {
-        buffer[r] = '\0';
-        if (strstr(buffer, "\n") != NULL)
-            break;
-    }
+    /* сервер отдает первый байт команды и переводит строку
+     пропускаем
+     буфер трем
+    */
+	recv(sock_fd, buffer, BUF_SIZE, 0);
+    /* сервер:
+    - отдает остаток команды
+    - переводит строку
+    - отдает ответ на команду
+    - переводит строку
+    */
+    int r = recv(sock_fd, buffer, BUF_SIZE, 0); 
+    buffer[r] = '\0';
+    // ответ сервера ответ на запрос будет после первого перевода строки
     printf("%s\n", strstr(buffer, "\n"));
+    
     if (shutdown(sock_fd, SHUT_RDWR) == -1) {
         err_msg = "Ошибка закрытия сокета";
         exit_code = errno;
