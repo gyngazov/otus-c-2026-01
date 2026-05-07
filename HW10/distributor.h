@@ -1,6 +1,5 @@
-//#include <pthread.h>
+
 #include <glib.h>
-//#include <stdio.h>
 
 // кеши
 struct Caches {      

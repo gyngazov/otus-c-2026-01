@@ -8,5 +8,3 @@ struct LogLine {
 };
 
 struct LogLine *parse_line(const char *buf);
-
-#define PRCO printf("%d\n", __COUNTER__);
