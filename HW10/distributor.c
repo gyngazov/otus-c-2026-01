@@ -26,11 +26,19 @@ void *worker(void * arg)
     GHashTable *qrys = init();
     while (fgets(buf, BUF_LEN, fp) != NULL) {
         ll = parse_line(buf);
+        if (ll == NULL) {
+            puts(NOMEM);
+            return (void *) ERR_NOMEM;
+        }
         inc(refs, ll->ref, 1);
         inc(qrys, ll->url, ll->size);
     }
     fclose(fp);
     struct Caches *ret = (struct Caches *) malloc(sizeof(struct Caches));
+    if (ret == NULL) {
+        puts(NOMEM);
+        return (void *) ERR_NOMEM;
+    }
     ret->queries = qrys;
     ret->refs = refs;
     return (void *) ret;

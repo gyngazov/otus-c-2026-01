@@ -1,6 +1,9 @@
 
 #include <glib.h>
 
+#define ERR_NOMEM   -3
+#define NOMEM       "Не выделена память"
+
 // кеши
 struct Caches {      
     GHashTable *queries;    // кеш суммарных пейлоадов по пути
