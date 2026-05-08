@@ -13,46 +13,23 @@
 #define NOMEM       "Не выделена память"
 #define ERR_BUF     -7
 
-int getopt(int argc, char** argv, char *params);
+struct Opts {
+    int thrds;
+    char *dir;
+};
+
 void check_err(int err);
+struct Opts set_options(int argc, char** argv);
 
 int main(int argc, char **argv)
 {
-    if (argc == 1) {
-        FAIL;
-        exit(EXIT_FAILURE);
-    }
-    char *dir;
-    int thrn;
-    int opt;
-    extern char *optarg;
-    extern int optind;
-    while((opt = getopt(argc, argv, ":d:n:")) != -1) { 
-        switch(opt) {  
-            case 'd': 
-                dir = optarg;
-                break;
-            case 'n': 
-                thrn = atoi(optarg);
-                break;
-            case ':': 
-                FAIL;
-                exit(EXIT_FAILURE);
-            case 'h':
-            case '?': 
-            default:
-                FAIL;
-                exit(EXIT_FAILURE);
-        } 
-    }
-    if (optind < argc) {
-        FAIL;
-        exit(EXIT_FAILURE);
-    }
+    const struct Opts opts = set_options(argc, argv);
+
+    const char *dir = opts.dir;
     const int dir_len = strlen(dir);
     int n = count_files(dir);
-    if (thrn <= n)
-        n = thrn;
+    if (opts.thrds <= n)
+        n = opts.thrds;
     struct dirent *de;
     DIR *dr = opendir(dir);
     if (dr == NULL) {
@@ -128,5 +105,41 @@ void check_err(int err)
         exit(EXIT_FAILURE);
 }
 
+int getopt(int argc, char** argv, char *params);
+
+struct Opts set_options(int argc, char** argv)
+{
+    if (argc == 1) {
+        FAIL;
+        exit(EXIT_FAILURE);
+    }
+    int opt;
+    extern char *optarg;
+    extern int optind;
+    struct Opts opts;
+    while((opt = getopt(argc, argv, ":d:n:")) != -1) { 
+        switch(opt) {  
+            case 'd': 
+                opts.dir = optarg;
+                break;
+            case 'n': 
+                opts.thrds = atoi(optarg);
+                break;
+            case ':': 
+                FAIL;
+                exit(EXIT_FAILURE);
+            case 'h':
+            case '?': 
+            default:
+                FAIL;
+                exit(EXIT_FAILURE);
+        } 
+    }
+    if (optind < argc) {
+        FAIL;
+        exit(EXIT_FAILURE);
+    }
+    return opts;
+}
 
 
