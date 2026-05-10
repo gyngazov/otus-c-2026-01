@@ -97,7 +97,6 @@ void send_file(int sockfd) {
     FILE *fp = fopen(resp, "r");
     char *err;
     if (fp == NULL) {
-        printf("file not open. errno: %d\n", errno);
         switch (errno) {
             case 13:
                 err = H403;
