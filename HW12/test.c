@@ -14,9 +14,20 @@
 #define MAX_EPOLL_EVENTS    128
 #define BACKLOG             128
 #define METHOD              "GET /"
+#define H403                "403 Forbidden"
+#define H404                "404 Not Found"
+#define H405                "405 Method not allowed"
+#define H500                "500 Internal Server Error"
+#define ERRRESP             "HTTP/1.1 %s\r\nConnection: close\r\n"
+#define FILERESP            "HTTP/1.1 200 OK\r\n" \
+                            "Connection: close\r\n" \
+                            "Content-Type: text/html\r\n" \
+                            "Content-Length: %lu\r\n" \
+                            "\r\n"
 
 static struct epoll_event events[MAX_EPOLL_EVENTS];
 static char buffer[SIZE];
+static char *file_dir = "./";
 
 
 int setnonblocking(int sock)
@@ -63,34 +74,61 @@ static char *substring(const char *buf, const int start, const int end)
 
 void send_file(int sockfd) {
     const char method[] = METHOD;
-    const char bad[] = "Bad method\n";
+    char resp[1024];
     int i = 0;
-    int ml = strlen(METHOD);
+    const int ml = strlen(METHOD);
     for (; i < ml; i++) {
         if (buffer[i] != method[i]) {
-            if (send(sockfd, bad, strlen(bad), 0) == -1) {
+            sprintf(resp, ERRRESP, H405);
+            if (send(sockfd, resp, strlen(resp), 0) == -1) {
                 perror("Ошибка ответа");
                 return;
             }
+            return;
         }
     }
     for (; buffer[i] != ' ' && i < strlen(buffer); i++);
-    char *path = substring(buffer, ml, i);
+    char *path = substring(buffer, ml, i - 1);
     if (path == NULL)
         return;
-    send(sockfd, path, i - ml, 0);
-    // FILE *fp = fopen("f.1", "r");
-    // int n;
-    // char data[SIZE] = {0};
-    // while (!feof(fp)) {
-    //     n = fread(data, 1, SIZE, fp);
-    //     if (send(sockfd, data, n, 0) == -1) {
-    //         perror("Error in sending file");
-    //         fclose(fp);
-    //         exit(errno);
-    //     }
-    // }
-    // fclose(fp);
+    
+    sprintf(resp, "%s%s%s", file_dir, "/", path);
+    free(path);
+    FILE *fp = fopen(resp, "r");
+    char *err;
+    if (fp == NULL) {
+        printf("file not open. errno: %d\n", errno);
+        switch (errno) {
+            case 13:
+                err = H403;
+                break;
+            case 2:
+                err = H404;
+                break;
+            default:
+                err = H500;
+                break;
+        }
+        sprintf(resp, ERRRESP, err);
+        send(sockfd, resp, strlen(resp), 0);
+        return;
+    }
+    fseek(fp, 0L, SEEK_END);
+    long flen = ftell(fp);
+    fseek(fp, 0L, SEEK_SET);
+    sprintf(resp, FILERESP, flen);
+    send(sockfd, resp, strlen(resp), 0);
+    int n;
+    char data[SIZE] = {0};
+    while (!feof(fp)) {
+        n = fread(data, 1, SIZE, fp);
+        if (send(sockfd, data, n, 0) == -1) {
+            perror("Error in sending file");
+            fclose(fp);
+            exit(errno);
+        }
+    }
+    fclose(fp);
 }
 
 void process_error(int fd)
@@ -104,6 +142,7 @@ int main(int argc, char** argv)
         printf("Usage: %s <port>\n", argv[0]);
         return EXIT_FAILURE;
     }
+    file_dir = argv[2];
     char* p;
     const int port = strtol(argv[1], &p, 10);
     if (*p) {
