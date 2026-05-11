@@ -24,12 +24,13 @@
                             "Content-Type: text/html\r\n" \
                             "Content-Length: %lu\r\n" \
                             "\r\n"
+#define USAGE               "usage: %s -p <port> -d <file dir>\n"
 
 static struct epoll_event events[MAX_EPOLL_EVENTS];
 static char buffer[SIZE];
 static char *file_dir = "./";
 
-
+static int set_options(int argc, char** argv);
 int setnonblocking(int sock)
 {
     int opts;
@@ -74,12 +75,15 @@ static char *substring(const char *buf, const int start, const int end)
 
 void send_file(int sockfd) {
     const char method[] = METHOD;
-    char resp[1024];
+    char resp[SIZE];
     int i = 0;
     const int ml = strlen(METHOD);
     for (; i < ml; i++) {
         if (buffer[i] != method[i]) {
-            sprintf(resp, ERRRESP, H405);
+            if (snprintf(resp, strlen(ERRRESP) + strlen(H405), ERRRESP, H405) == -1) {
+                puts("Ошибка копирования");
+                return;
+            }
             if (send(sockfd, resp, strlen(resp), 0) == -1) {
                 perror("Ошибка ответа");
                 return;
@@ -92,7 +96,10 @@ void send_file(int sockfd) {
     if (path == NULL)
         return;
     
-    sprintf(resp, "%s%s%s", file_dir, "/", path);
+    if (snprintf(resp, strlen(file_dir) + strlen(path) + 1, "%s%s%s", file_dir, "/", path) == -1) {
+        puts("Ошибка копирования");
+        return;
+    }
     free(path);
     FILE *fp = fopen(resp, "r");
     char *err;
@@ -108,20 +115,39 @@ void send_file(int sockfd) {
                 err = H500;
                 break;
         }
-        sprintf(resp, ERRRESP, err);
-        send(sockfd, resp, strlen(resp), 0);
+        if (snprintf(resp, strlen(ERRRESP) + strlen(err) - 1, ERRRESP, err) == -1) {
+            puts("Ошибка копирования");
+            return;
+        }
+        if (send(sockfd, resp, strlen(resp), 0) == -1) {
+            perror("Ошибка ответа");
+            return;
+        }
         return;
     }
-    fseek(fp, 0L, SEEK_END);
+    if (fseek(fp, 0L, SEEK_END) == -1) {
+        perror("Ошибка файла");
+        return;
+    }
     long flen = ftell(fp);
-    fseek(fp, 0L, SEEK_SET);
-    sprintf(resp, FILERESP, flen);
-    send(sockfd, resp, strlen(resp), 0);
+    if (flen == -1 || fseek(fp, 0L, SEEK_SET) == -1) {
+        perror("Ошибка файла");
+        return;
+    }
+    char *str_len = itoa(flen);
+    if (snprintf(resp, strlen(FILERESP) + FILERESP, flen) == -1) {
+        puts("Ошибка копирования");
+        return;
+    }
+    if (send(sockfd, resp, strlen(resp), 0) == -1) {
+        perror("Error in sending file");
+        fclose(fp);
+        exit(errno);
+    }
     int n;
-    char data[SIZE] = {0};
     while (!feof(fp)) {
-        n = fread(data, 1, SIZE, fp);
-        if (send(sockfd, data, n, 0) == -1) {
+        n = fread(resp, 1, SIZE, fp);
+        if (send(sockfd, resp, n, 0) == -1) {
             perror("Error in sending file");
             fclose(fp);
             exit(errno);
@@ -137,17 +163,7 @@ void process_error(int fd)
 
 int main(int argc, char** argv)
 {
-    if (argc < 2) {
-        printf("Usage: %s <port>\n", argv[0]);
-        return EXIT_FAILURE;
-    }
-    file_dir = argv[2];
-    char* p;
-    const int port = strtol(argv[1], &p, 10);
-    if (*p) {
-        puts("Ошибка номера порта");
-        exit(EXIT_FAILURE);
-    }
+    const int port = set_options(argc, argv);
     if (signal(SIGPIPE, SIG_IGN) == SIG_ERR) {
         perror("Ошибка сигнала");
         exit(errno);
@@ -236,4 +252,39 @@ int main(int argc, char** argv)
         }
     }
     return EXIT_SUCCESS;
+}
+
+static int set_options(int argc, char** argv)
+{
+    if (argc == 1) {
+        printf(USAGE, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+    int opt;
+    extern char *optarg;
+    extern int optind;
+    int port;
+    while((opt = getopt(argc, argv, ":d:p:")) != -1) { 
+        switch(opt) {  
+            case 'd': 
+                file_dir = optarg;
+                break;
+            case 'p': 
+                port = atoi(optarg);
+                break;
+            case ':': 
+                printf(USAGE, argv[0]);
+                exit(EXIT_FAILURE);
+            case 'h':
+            case '?': 
+            default:
+                printf(USAGE, argv[0]);
+                exit(EXIT_FAILURE);
+        } 
+    }
+    if (optind < argc) {
+        printf(USAGE, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+    return port;
 }
