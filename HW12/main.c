@@ -15,12 +15,16 @@
 #define MAX_EPOLL_EVENTS    128
 #define BACKLOG             128
 #define SIZE                2048
+#define METHOD              "GET /"
+
 static char buffer[SIZE];
 
 struct epoll_event events[MAX_EPOLL_EVENTS];
 char *file_dir = "./";
 
 int set_options(int argc, char** argv);
+int do_read(const int fd);
+char *set_file();
 
 int main(int argc, char** argv)
 {
@@ -65,6 +69,7 @@ int main(int argc, char** argv)
     struct epoll_event connev;
     int events_count = 1;
     int nfds, connfd, fd;
+    char *file_path;
     for (;;) {
         nfds = epoll_wait(efd, events, MAX_EPOLL_EVENTS, -1);
         if (nfds == -1) {
@@ -98,9 +103,11 @@ int main(int argc, char** argv)
             } else {
                 fd = events[i].data.fd;
                 if (events[i].events & EPOLLIN)
-                    do_read(fd, buffer);
-                if (events[i].events & EPOLLOUT)
-                    send_file(fd, file_dir, buffer);
+                    do_read(fd);
+                if (events[i].events & EPOLLOUT) {
+                    file_path = set_file();
+                    send_file(fd, file_path);
+                }
                 if (events[i].events & EPOLLRDHUP)
                     process_error(fd);
                 if (epoll_ctl(efd, EPOLL_CTL_DEL, fd, &connev) == -1) {
@@ -151,4 +158,46 @@ int set_options(int argc, char** argv)
     if (optind < argc || port == 0 || strlen(file_dir) == 0 || i != 0)
         DIE(argv[0]);
     return port;
+}
+
+char *set_file() 
+{
+    const char method[] = METHOD;
+    int i = 0;
+    const int ml = strlen(METHOD);
+    const int bl = strlen(buffer);
+    printf("buffer: %s len: %d\n", buffer, bl);
+    for (; i < ml; i++)
+        if (buffer[i] != method[i])
+            return NULL;
+    for (; buffer[i] != ' ' && i < bl; i++);
+    char *path = substring(buffer, ml, i - 1);
+    if (path == NULL)
+        return NULL;
+    int len = strlen(file_dir) + 1 + strlen(path);
+    char *file_path = (char *) malloc(len + 1);
+    if (file_path == NULL)
+        return NULL;
+    if (snprintf(file_path, len, "%s%s%s", file_dir, "/", path) == -1) {
+        puts("Ошибка копирования");
+        free(path);
+        free(file_path);
+        return NULL;
+    }
+    file_path[len] = 0;
+    free(path);
+    printf("file : %s\n", file_path);
+    return file_path;
+}
+
+int do_read(const int fd)
+{
+    const int rc = recv(fd, buffer, sizeof(buffer), 0);
+    if (rc == -1) {
+        perror("Ошибка чтения сокета");
+        return errno;
+    }
+    buffer[rc] = 0;
+    printf("read: %s\n", buffer);
+    return EXIT_SUCCESS;
 }

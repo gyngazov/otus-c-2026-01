@@ -37,19 +37,19 @@ int setnonblocking(const int sock)
     return EXIT_SUCCESS;
 }
 
-int do_read(const int fd, char *buffer)
-{
-    const int rc = recv(fd, buffer, sizeof(buffer), 0);
-    if (rc == -1) {
-        perror("Ошибка чтения сокета");
-        return errno;
-    }
-    buffer[rc] = 0;
-    printf("read: %s\n", buffer);
-    return EXIT_SUCCESS;
-}
+// int do_read(const int fd, char *buffer)
+// {
+//     const int rc = recv(fd, buffer, sizeof(buffer), 0);
+//     if (rc == -1) {
+//         perror("Ошибка чтения сокета");
+//         return errno;
+//     }
+//     buffer[rc] = 0;
+//     printf("read: %s\n", buffer);
+//     return EXIT_SUCCESS;
+// }
 // из буф вырезать со start по end
-static char *substring(const char *buf, const int start, const int end)
+char *substring(const char *buf, const int start, const int end)
 {
     const int bl = strlen(buf) + 1;
     if (end > bl || start > bl || end <= start || end <= 0 || start < 0)
@@ -77,32 +77,37 @@ static int snprint_send(const int sockfd, const char *mask, const char* msg)
     return 0;
 }
 
-void send_file(const int sockfd, const char *dir, const char *buffer) 
+void send_file(const int sockfd, const char *file_path) 
 {
-    const char method[] = METHOD;
-    char resp[SIZE];
-    int i = 0;
-    const int ml = strlen(METHOD);
-    const int bl = strlen(buffer);
-    printf("buffer: %s\n", buffer);
-    for (; i < ml; i++) {
-        if (buffer[i] != method[i]) {
-            snprint_send(sockfd, ERRRESP, H405);
-            return;
-        }
-    }
-    for (; buffer[i] != ' ' && i < bl; i++);
-    char *path = substring(buffer, ml, i - 1);
-    if (path == NULL)
-        return;
+    // const char method[] = METHOD;
+    // char resp[SIZE];
+    // int i = 0;
+    // const int ml = strlen(METHOD);
+    // const int bl = strlen(buffer);
+    // printf("buffer: %s len: %d\n", buffer, bl);
+    // for (; i < ml; i++) {
+    //     if (buffer[i] != method[i]) {
+    //         snprint_send(sockfd, ERRRESP, H405);
+    //         return;
+    //     }
+    // }
+    // for (; buffer[i] != ' ' && i < bl; i++);
+    // char *path = substring(buffer, ml, i - 1);
+    // if (path == NULL)
+    //     return;
     
-    if (snprintf(resp, SIZE, "%s%s%s", dir, "/", path) == -1) {
-        puts("Ошибка копирования");
+    // if (snprintf(resp, SIZE, "%s%s%s", dir, "/", path) == -1) {
+    //     puts("Ошибка копирования");
+    //     return;
+    // }
+    // free(path);
+    // printf("file : %s\n", resp);
+    
+    if (file_path == NULL) {
+        snprint_send(sockfd, ERRRESP, H500);
         return;
     }
-    free(path);
-    printf("file : %s\n", resp);
-    FILE *fp = fopen(resp, "r");
+    FILE *fp = fopen(file_path, "r");
     char *err;
     if (fp == NULL) {
         switch (errno) {
@@ -139,6 +144,7 @@ void send_file(const int sockfd, const char *dir, const char *buffer)
         return;
     }
     int n;
+    char resp[SIZE];
     while (!feof(fp)) {
         n = fread(resp, 1, SIZE, fp);
         if (send(sockfd, resp, n, 0) == -1) {

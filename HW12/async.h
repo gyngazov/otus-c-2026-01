@@ -1,5 +1,6 @@
 
 int setnonblocking(const int sock);
-int do_read(const int fd, char *buffer);
-void send_file(const int sockfd, const char *dir, const char *buffer) ;
+//int do_read(const int fd);
+void send_file(const int sockfd, const char *file_path) ;
 void process_error(const int fd);
+char *substring(const char *buf, const int start, const int end);
