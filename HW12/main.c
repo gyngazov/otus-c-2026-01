@@ -102,9 +102,12 @@ int main(int argc, char** argv)
                 events_count++;
             } else {
                 fd = events[i].data.fd;
-                if (events[i].events & EPOLLIN)
+                if (events[i].events & EPOLLIN) {
+                    puts("read");
                     do_read(fd);
+                }
                 if (events[i].events & EPOLLOUT) {
+                    puts("send");
                     file_path = set_file();
                     send_file(fd, file_path);
                 }
@@ -160,6 +163,7 @@ int set_options(int argc, char** argv)
     return port;
 }
 
+// путь к файлу по строке запроса
 char *set_file() 
 {
     const char method[] = METHOD;
@@ -174,7 +178,7 @@ char *set_file()
     char *path = substring(buffer, ml, i - 1);
     if (path == NULL)
         return NULL;
-    int len = strlen(file_dir) + 1 + strlen(path);
+    int len = strlen(file_dir) + 1 + strlen(path) + 1;
     char *file_path = (char *) malloc(len + 1);
     if (file_path == NULL)
         return NULL;
@@ -192,6 +196,7 @@ char *set_file()
 
 int do_read(const int fd)
 {
+    puts("do read");
     const int rc = recv(fd, buffer, sizeof(buffer), 0);
     if (rc == -1) {
         perror("Ошибка чтения сокета");
