@@ -10,49 +10,32 @@
 
 #define USAGE       "Usage: %s -d <log dir> -n <threads number>\n"
 #define FAIL        printf(USAGE, argv[0])
+#define NOMEM       "Не выделена память"
+#define ERR_BUF     -7
 
-int getopt(int argc, char** argv, char *params);
+struct Opts {
+    int thrds;
+    char *dir;
+};
+
+void check_err(int err);
+struct Opts set_options(int argc, char** argv);
 
 int main(int argc, char **argv)
 {
-    if (argc == 1) {
-        FAIL;
-        exit(EXIT_FAILURE);
-    }
-    char *dir;
-    int thrn;
-    int opt;
-    extern char *optarg;
-    extern int optind;
-    while((opt = getopt(argc, argv, ":d:n:")) != -1) { 
-        switch(opt) {  
-            case 'd': 
-                dir = optarg;
-                break;
-            case 'n': 
-                thrn = atoi(optarg);
-                break;
-            case ':': 
-                FAIL;
-                exit(EXIT_FAILURE);
-            case 'h':
-            case '?': 
-            default:
-                FAIL;
-                exit(EXIT_FAILURE);
-        } 
-    }
-    if (optind < argc) {
-        FAIL;
-        exit(EXIT_FAILURE);
-    }
+    const struct Opts opts = set_options(argc, argv);
 
+    const char *dir = opts.dir;
     const int dir_len = strlen(dir);
     int n = count_files(dir);
-    if (thrn <= n)
-        n = thrn;
+    if (opts.thrds <= n)
+        n = opts.thrds;
     struct dirent *de;
     DIR *dr = opendir(dir);
+    if (dr == NULL) {
+        perror("Не открылась папка");
+        exit(errno);
+    }
     int i = 0;
     int len;
     char *files[n];
@@ -62,11 +45,11 @@ int main(int argc, char **argv)
         len = dir_len + 1 + strlen(de->d_name) + 1;
         files[i] = (char *) malloc(len);
         if (files[i] == NULL) {
-            perror("Не выделена память");
+            puts(NOMEM);
             exit(EXIT_FAILURE);
         }
         if (snprintf(files[i], len, "%s%s%s", dir, "/", de->d_name) < 0) {
-            printf("Ошибка копирования\n");
+            puts("Ошибка копирования");
             exit(EXIT_FAILURE);
         }
         i++;
@@ -87,9 +70,11 @@ int main(int argc, char **argv)
     GHashTable *totalrefs = init();
     for (int i = 0; i < n; i++) {
         if (pthread_join(thrds[i], &res) != 0)
-            printf("Поток не завершается\n");
+            puts("Поток не завершается");
         else if ((int*)res == PTHREAD_CANCELED)
-            printf("Поток отменен");
+            puts("Поток отменен");
+        else if ((int*)res == (int *)ERR_NOMEM)
+            puts(NOMEM);
         else {
             ret = (struct Caches *) res;
             merge(totalquer, ret->queries);
@@ -103,15 +88,58 @@ int main(int argc, char **argv)
         free(files[i]);
     int total = sum(totalquer);
     printf("\nОтдано байт: %d\n", total);
-    printf("\n10 самых тяжелых по трафику url-ов:\n");
-    get_top(totalquer);
-    printf("\n10 наиболее часто встречающихся Referer'ов:\n");
-    get_top(totalrefs);
+    puts("\n10 самых тяжелых по трафику url-ов:");
+    int err = get_top(totalquer);
+    check_err(err);
+    puts("\n10 наиболее часто встречающихся Referer'ов:");
+    err = get_top(totalrefs);
     
     destroy(totalquer);
     destroy(totalrefs);
     return EXIT_SUCCESS;
 }
 
+void check_err(int err)
+{
+    if (err == ERR_NOMEM || err == ERR_BUF)
+        exit(EXIT_FAILURE);
+}
+
+int getopt(int argc, char** argv, char *params);
+
+struct Opts set_options(int argc, char** argv)
+{
+    if (argc == 1) {
+        FAIL;
+        exit(EXIT_FAILURE);
+    }
+    int opt;
+    extern char *optarg;
+    extern int optind;
+    struct Opts opts;
+    while((opt = getopt(argc, argv, ":d:n:")) != -1) { 
+        switch(opt) {  
+            case 'd': 
+                opts.dir = optarg;
+                break;
+            case 'n': 
+                opts.thrds = atoi(optarg);
+                break;
+            case ':': 
+                FAIL;
+                exit(EXIT_FAILURE);
+            case 'h':
+            case '?': 
+            default:
+                FAIL;
+                exit(EXIT_FAILURE);
+        } 
+    }
+    if (optind < argc) {
+        FAIL;
+        exit(EXIT_FAILURE);
+    }
+    return opts;
+}
 
 

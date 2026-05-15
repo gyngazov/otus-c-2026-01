@@ -36,6 +36,8 @@ struct LogLine *parse_line(const char *buf)
     const int start_ref = i + 2;
     const int end_ref = shift(buf, start_ref, len) - 2;
     struct LogLine *ll = (struct LogLine *) malloc(sizeof(struct LogLine));
+    if (ll == NULL)
+        return NULL;
     ll->size = t;
     ll->url = get_str(buf, start_url, end_url);
     ll->ref = get_str(buf, start_ref, end_ref);
