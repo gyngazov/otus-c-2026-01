@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include <sys/epoll.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -5,6 +7,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <sys/socket.h>
+#include <signal.h>
 
 #define SIZE                2048
 #define METHOD              "GET /"
@@ -32,7 +35,6 @@ int setnonblocking(const int sock)
         perror("F_SETFL не установлено");
         return errno;
     }
-    puts("non blocking set");
     return EXIT_SUCCESS;
 }
 
@@ -46,7 +48,7 @@ char *substring(const char *buf, const int start, const int end)
     if (res == NULL)
         return NULL;
     memcpy(res, buf + start, len);
-    *(res + len) = '\0';
+    res[len] = '\0';
     return res;
 }
 
@@ -88,39 +90,48 @@ void send_file(const int sockfd, const char *file_path)
         snprint_send(sockfd, ERRRESP, err);
         return;
     }
-    if (fseek(fp, 0L, SEEK_END) == -1) {
-        perror("Ошибка файла");
-        return;
-    }
+    char *err_txt = "Ошибка файла";
+    if (fseek(fp, 0L, SEEK_END) == -1)
+        goto end;
     long flen = ftell(fp);
-    if (flen == -1 || fseek(fp, 0L, SEEK_SET) == -1) {
-        perror("Ошибка файла");
-        return;
-    }
+    if (flen == -1 || fseek(fp, 0L, SEEK_SET) == -1)
+        goto end;
     char tmp[16];
     if (snprintf(tmp, 16, "%lu", flen) == -1) {
-        puts("Ошибка копирования");
-        return;
+        err_txt = "Ошибка копирования";
+        goto end;
     }
     if (snprint_send(sockfd, FILERESP, tmp) < 0) {
-        puts("Ошибка отправки");
-        fclose(fp);
-        return;
+        err_txt = "Ошибка отправки";
+        goto end;
     }
     int n;
     char resp[SIZE];
     while (!feof(fp)) {
         n = fread(resp, 1, SIZE, fp);
-        if (send(sockfd, resp, n, 0) == -1) {
-            perror("Ошибка отправки");
-            fclose(fp);
-            return;
-        }
+        if (send(sockfd, resp, n, 0) == -1)
+            goto end;
     }
+    return;
+end:
+    perror(err_txt);
     fclose(fp);
 }
 
 void process_error(int fd)
 {
     printf("fd %d error!\n", fd);
+}
+
+void ignore_broken_pipe()
+{
+    struct sigaction sa;
+    sa.sa_handler = SIG_IGN;
+    sigemptyset(&sa.sa_mask);     
+    sa.sa_flags = 0;              
+
+    if (sigaction(SIGPIPE, &sa, NULL) == -1) {
+        perror("Ошибка сигнала");
+        exit(errno);
+    }
 }
