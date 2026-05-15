@@ -3,7 +3,7 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <signal.h>
+
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -29,10 +29,9 @@ char *set_file();
 int main(int argc, char** argv)
 {
     const int port = set_options(argc, argv);
-    if (signal(SIGPIPE, SIG_IGN) == SIG_ERR) {
-        perror("Ошибка сигнала");
-        exit(errno);
-    }
+    #include <signal.h>
+
+    ignore_broken_pipe();
     const int efd = epoll_create(MAX_EPOLL_EVENTS);
     if (efd == -1) {
         perror("Ошибка создания шины");
@@ -43,28 +42,25 @@ int main(int argc, char** argv)
         perror("Ошибка создания сокета");
         exit(errno);
     }
-    if (setnonblocking(listenfd) != EXIT_SUCCESS) {
-        close(listenfd);
-        exit(EXIT_FAILURE);
-    }
+    if (setnonblocking(listenfd) != EXIT_SUCCESS)
+        goto err;
     struct sockaddr_in servaddr = {0};
     servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
     servaddr.sin_port = htons(port);
-    if (bind(listenfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0) {
-        perror("Не связан адрес");
-        exit(errno);
-    }
+    char *err_txt = "Не связан адрес";
+    if (bind(listenfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0)
+        goto err;
     if (listen(listenfd, BACKLOG) < 0) {
-        perror("Ошибка прослушки");   
-        exit(errno);
+        err_txt = "Ошибка прослушки";   
+        goto err;
     }
     struct epoll_event listenev;
     listenev.events = EPOLLIN | EPOLLET;
     listenev.data.fd = listenfd;
     if (epoll_ctl(efd, EPOLL_CTL_ADD, listenfd, &listenev) < 0) {
-        perror("Не сконфигурирована шина");
-        exit(errno);
+        err_txt = "Не сконфигурирована шина";
+        goto err;
     }
     struct epoll_event connev;
     int events_count = 1;
@@ -102,12 +98,10 @@ int main(int argc, char** argv)
                 events_count++;
             } else {
                 fd = events[i].data.fd;
-                if (events[i].events & EPOLLIN) {
-                    puts("read");
+                if (events[i].events & EPOLLIN)
                     do_read(fd);
-                }
+                
                 if (events[i].events & EPOLLOUT) {
-                    puts("send");
                     file_path = set_file();
                     send_file(fd, file_path);
                 }
@@ -123,6 +117,10 @@ int main(int argc, char** argv)
         }
     }
     return EXIT_SUCCESS;
+    err:
+    perror(err_txt);
+    close(listenfd);
+    return errno;
 }
 
 #define DIE(argv0) do { \
@@ -136,7 +134,8 @@ int set_options(int argc, char** argv)
 {
     if (argc == 1) 
         DIE(argv[0]);
-    int opt, port;
+    int opt;
+    long port;
     extern char *optarg;
     extern int optind;
     int i = 2;
@@ -147,7 +146,7 @@ int set_options(int argc, char** argv)
                 i--;
                 break;
             case 'p': 
-                port = atoi(optarg);
+                port = strtol(optarg, NULL, 10);
                 i--;
                 break;
             case ':': 
@@ -158,7 +157,12 @@ int set_options(int argc, char** argv)
                 DIE(argv[0]);
         } 
     }
-    if (optind < argc || port == 0 || strlen(file_dir) == 0 || i != 0)
+    if (optind < argc 
+        || port <= 0 
+        || strlen(file_dir) == 0 
+        || i != 0 
+        || errno != 0 
+        || port > 65535)
         DIE(argv[0]);
     return port;
 }
@@ -170,7 +174,6 @@ char *set_file()
     int i = 0;
     const int ml = strlen(METHOD);
     const int bl = strlen(buffer);
-    printf("buffer: %s len: %d\n", buffer, bl);
     for (; i < ml; i++)
         if (buffer[i] != method[i])
             return NULL;
@@ -190,13 +193,11 @@ char *set_file()
     }
     file_path[len] = 0;
     free(path);
-    printf("file : %s\n", file_path);
     return file_path;
 }
 
 int do_read(const int fd)
 {
-    puts("do read");
     const int rc = recv(fd, buffer, sizeof(buffer), 0);
     if (rc == -1) {
         perror("Ошибка чтения сокета");
@@ -206,3 +207,4 @@ int do_read(const int fd)
     printf("read: %s\n", buffer);
     return EXIT_SUCCESS;
 }
+
