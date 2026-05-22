@@ -41,7 +41,7 @@ set -euo pipefail
 DEBUG=/sys/kernel/debug/tracing
 IOCTL=../userspace/ioctl_test
 
-FUNCS="lkm_slow_work lkm_ioctl lkm_write lkm_proc_show lkm_open lkm_release"
+FUNCS="del_test cre_test"
 
 tr_write() { echo "$1" > "${DEBUG}/$2"; }
 tr_clear()  { : > "${DEBUG}/trace"; }     # : > file — самый быстрый способ очистки
@@ -64,10 +64,10 @@ trap cleanup EXIT
 #     echo "[info] lkm_debug already loaded"
 # fi
 
-tr_write 4096 buffer_size_kb
-echo "[info] buffer = 4096 KB"
+# tr_write 4096 buffer_size_kb
+# echo "[info] buffer = 4096 KB"
 
-# Диагностика перед запуском
+# # Диагностика перед запуском
 # echo
 # echo "=== Диагностика ==="
 # echo -n "/dev/lkm_debug: "
@@ -79,7 +79,7 @@ echo "[info] buffer = 4096 KB"
 # echo "--- тестовый запуск ioctl_test ping ---"
 # "${IOCTL}" ping && echo "[ok] ioctl_test ping работает" || echo "[FAIL] ioctl_test не работает"
 
-# Фильтр: только точные имена
+# # Фильтр: только точные имена
 # echo
 # echo "=== Фильтр ==="
 # FIRST=1
@@ -95,22 +95,23 @@ echo "[info] buffer = 4096 KB"
 # done
 # [ "${FIRST}" = "1" ] && { echo "ERROR: нет инструментированных функций"; exit 1; }
 
-tr_write function current_tracer
+#: > /sys/kernel/debug/tracing/set_ftrace_filter
+
+#echo -n close > /sys/kernel/debug/tracing/set_ftrace_filter
+#echo -n creat >> /sys/kernel/debug/tracing/set_ftrace_filter
+#echo -n unlink >> /sys/kernel/debug/tracing/set_ftrace_filter
+tr_write function_graph current_tracer
 
 # Сценарии
-# echo
-# # echo "=== 1. /proc/lkm_debug ==="
-# tr_clear; tr_on
-# cat /proc/lkm_debug >/dev/null 2>&1
-# tr_off
-# tr_show 10
-
 echo
-echo "=== 2. ioctl_test ping ==="
-tr_clear; tr_on
-./a.out 2>&1 || true
+echo "tests"
+tr_clear
+tr_on
+./a.out
 tr_off
-tr_show 10
+#tr_show 100
+cat /sys/kernel/debug/tracing/trace
+cleanup
 
 # echo
 # echo "=== 2. ioctl_test ping ==="
