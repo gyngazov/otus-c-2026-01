@@ -1,6 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <linux/kernel.h>
+#include <linux/mutex.h>
 
 #define DEVICE_NAME     "mychardev"
 #define CLASS_NAME      "mychar"
@@ -51,7 +56,7 @@ static ssize_t my_write(struct file *file, const char __user *user_buf,
 {
     if (count >= sizeof(kernel_buffer)) {
         printk(KERN_ERR "Buffer overflow attempt\n");
-    return -EINVAL;
+        return -EINVAL;
     }
     if (copy_from_user(kernel_buffer, user_buf, count))
         return -EFAULT;
@@ -83,7 +88,7 @@ static const struct file_operations fops = {
     .unlocked_ioctl = my_ioctl,
 };
 
-static int __init chardev_init(void) 
+static int /*__init*/ chardev_init(void) 
 {
     int ret;
 // 1. Выделяем диапазон major/minor номеров
@@ -116,7 +121,7 @@ static int __init chardev_init(void)
     return 0;
 }
 
-static void __exit chardev_exit(void) 
+static void /*__exit*/ chardev_exit(void) 
 {
     device_destroy(my_class, dev_num);
     class_destroy(my_class);
@@ -133,13 +138,13 @@ int main()
     const char *test_msg = "Hello from user space!";
     const char *ioctl_msg = "IOCTL command";
 // --- Проверка open() ---
-    printf("[TEST] Opening device...\n");
+    puts("[TEST] Opening device...");
     fd = open(DEVICE_PATH, O_RDWR);
     if (fd < 0) {
         perror("Failed to open device");
         return 1;
     }
-    printf("[OK] Device opened\n\n");
+    puts("[OK] Device opened");
 // --- Проверка write() ---
     printf("[TEST] Writing to device: \"%s\"\n", test_msg);
     if (write(fd, test_msg, strlen(test_msg)) < 0) {
@@ -147,11 +152,11 @@ int main()
         close(fd);
         return 1;
     }
-    printf("[OK] Write successful\n\n");
+    puts("[OK] Write successful");
 // --- Проверка read() ---
-    printf("[TEST] Reading from device...\n");
+    puts("[TEST] Reading from device...");
     lseek(fd, 0, SEEK_SET); // Сбрасываем позицию
-    ssize_t bytes_read = read(fd, buf, sizeof(buf)-1);
+    ssize_t bytes_read = read(fd, buf, sizeof(buf) - 1);
     if (bytes_read < 0) {
         perror("Read failed");
         close(fd);
@@ -167,18 +172,18 @@ int main()
         return 1;
     }
 // --- Проверка закрытия ---
-    printf("[TEST] Closing device...\n");
+    puts("[TEST] Closing device...");
     if (close(fd) < 0) {
         perror("Close failed");
         return 1;
     }
-    printf("[OK] Device closed\n");
+    puts("[OK] Device closed");
 // --- Проверка попытки повторного открытия (mutex) ---
-    printf("\n[TEST] Testing concurrent access...\n");
+    puts("\n[TEST] Testing concurrent access...");
     int fd1 = open(DEVICE_PATH, O_RDWR);
     int fd2 = open(DEVICE_PATH, O_RDWR);
     if (fd1 >= 0 && fd2 >= 0) {
-        printf("[FAIL] Concurrent access allowed!\n");
+        puts("[FAIL] Concurrent access allowed!");
         close(fd1);
         close(fd2);
         return 1;
@@ -187,6 +192,6 @@ int main()
         close(fd1);
     if (fd2 >= 0) 
         close(fd2);
-    printf("[OK] Mutex works correctly (second open failed)\n");
+    puts("[OK] Mutex works correctly (second open failed)");
     return 0;
 }
