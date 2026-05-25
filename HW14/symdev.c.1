@@ -6,6 +6,11 @@
 #include <unistd.h>
 #include <linux/kernel.h>
 #include <linux/mutex.h>
+#include <linux/types.h>
+#include <linux/atomic.h>
+#include <linux/uaccess.h>
+#include <linux/slab.h>
+
 
 #define DEVICE_NAME     "mychardev"
 #define CLASS_NAME      "mychar"
@@ -88,7 +93,7 @@ static const struct file_operations fops = {
     .unlocked_ioctl = my_ioctl,
 };
 
-static int /*__init*/ chardev_init(void) 
+static int __init chardev_init(void) 
 {
     int ret;
 // 1. Выделяем диапазон major/minor номеров
@@ -121,7 +126,7 @@ static int /*__init*/ chardev_init(void)
     return 0;
 }
 
-static void /*__exit*/ chardev_exit(void) 
+static void __exit chardev_exit(void) 
 {
     device_destroy(my_class, dev_num);
     class_destroy(my_class);

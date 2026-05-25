@@ -1,11 +1,11 @@
-TGT=chardev
-CFLAGS=-Wall -Wextra -Wpedantic -std=c11
+TGT=module
+CFLAGS=-w#-Wall -Wextra -Wpedantic -std=c11
 INC=\
--I/usr/src/linux-headers-6.8.0-60-generic/arch/x86/include/generated \
--I/usr/src/linux-hwe-6.8-headers-6.8.0-60/include \
--I/usr/src/linux-hwe-6.8-headers-6.8.0-60/arch/x86/include
+-I/usr/src/kernels/6.19.10-300.fc44.x86_64/arch/x86/include/ \
+-I/usr/src/kernels/6.19.10-300.fc44.x86_64/arch/x86/include/generated \
+-I/usr/src/kernels/6.19.10-300.fc44.x86_64/include
 
-OBJS=symdev.o
+OBJS=${TGT}.o
 
 %.o : %.c
 	gcc -c $(CFLAGS) $(INC) $< -o $@
