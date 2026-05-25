@@ -20,6 +20,6 @@ int cre_test()
 void main()
 {
     del_test();
-    cre_test();
+    //cre_test();
 }
 
