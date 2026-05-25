@@ -1,16 +1,27 @@
 #!/bin/bash
 
-cd /sys/kernel/tracing
+KT=/sys/kernel/tracing
+AOUT=a.out
+LOG=1.log
 
-echo function > current_tracer
-# echo sys_* > set_ftrace_filter
-# echo _raw_spin_lock >> set_ftrace_filter
-echo 1 > tracing_on
-/home/xtr/dev/otus-c-2026-01/HW13/a.out
-echo 0 > tracing_on
-cat trace
+echo function > $KT/current_tracer
+echo 1 > $KT/tracing_on
+./$AOUT
+echo 0 > $KT/tracing_on
+cat $KT/trace > $LOG
 
-echo > trace
-echo > set_ftrace_filter
-echo nop > current_tracer
-echo > set_ftrace_pid
+echo > $KT/trace
+echo > $KT/set_ftrace_filter
+echo nop > $KT/current_tracer
+echo > $KT/set_ftrace_pid
+
+echo "10 самых частых вызовов ядра в приложении $AOUT"
+grep $AOUT $LOG \
+    |awk '{print $5" "$6}' \
+    |sort \
+    |uniq -c \
+    |sort -nr \
+    |head \
+    |cat -n
+
+rm -f $LOG
