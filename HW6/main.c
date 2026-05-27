@@ -132,13 +132,13 @@ void app_activate_cb(GApplication* app) {
 	renderer = gtk_cell_renderer_text_new();
 	column = gtk_tree_view_column_new_with_attributes("Name", renderer, "text", FILE_NAME, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view), column);
-	gtk_tree_view_expand_all(GTK_TREE_VIEW(tree_view));
+	//gtk_tree_view_expand_all(GTK_TREE_VIEW(tree_view));
 
 	GtkWidget *scrolled_window = gtk_scrolled_window_new();
 	gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled_window), tree_view);
 	gtk_window_set_child(GTK_WINDOW(window), scrolled_window);
 
-	gtk_widget_show(window);
+	gtk_window_present(GTK_WINDOW(window));
 }
 
 int main(int argc, char** argv) {

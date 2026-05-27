@@ -1,0 +1,14 @@
+# tracer: function
+#
+# entries-in-buffer/entries-written: 2/2   #P:4
+#
+#                                _-----=> irqs-off/BH-disabled
+#                               / _----=> need-resched
+#                              | / _---=> hardirq/softirq
+#                              || / _--=> preempt-depth
+#                              ||| / _-=> migrate-disable
+#                              |||| /     delay
+#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION
+#              | |         |   |||||     |         |
+           a.out-70518   [002] ..... 37715.509111: my_ioctl <-__x64_sys_ioctl
+           a.out-70518   [002] ..... 37715.509125: my_ioctl <-__x64_sys_ioctl

@@ -2,7 +2,7 @@ TARGET=gtk
 CFLAGS=-Wall -Wextra -Wpedantic -std=c11
 LFLAGS=$(shell pkg-config --libs gtk4) 
 PKG=$(shell pkg-config --cflags gtk4)
-OBJS=main.o
+OBJS=test.o
 
 %.o : %.c
 	gcc -c $(CFLAGS) $(PKG) $< -o $@
