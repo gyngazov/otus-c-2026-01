@@ -1,17 +1,24 @@
-TGT=module
-CFLAGS=-w#-Wall -Wextra -Wpedantic -std=c11
-INC=\
--I/usr/src/kernels/6.19.10-300.fc44.x86_64/arch/x86/include/ \
--I/usr/src/kernels/6.19.10-300.fc44.x86_64/arch/x86/include/generated \
--I/usr/src/kernels/6.19.10-300.fc44.x86_64/include
 
-OBJS=${TGT}.o
+TGT=charmod
+obj-m += ${TGT}.o
 
-%.o : %.c
-	gcc -c $(CFLAGS) $(INC) $< -o $@
+KDIR ?= /lib/modules/$(shell uname -r)/build
+PWD  := $(CURDIR)
 
-${TGT}: ${OBJS}
-	gcc -o ${TGT} $^
+all:
+	$(MAKE) -C $(KDIR) M=$(PWD) modules
 
 clean:
-	rm -f ${OBJS} ${TGT} ./a.out
+	$(MAKE) -C $(KDIR) M=$(PWD) clean
+
+load:
+	sudo insmod ${TGT}.ko
+
+unload:
+	sudo rmmod ${TGT}
+
+info:
+	modinfo ${TGT}.ko
+
+dmesg:
+	sudo dmesg | tail -20
