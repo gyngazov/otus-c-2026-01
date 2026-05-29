@@ -1,12 +1,11 @@
-TGT=gtk
-#LFLAGS=-lrt
-PKG=$(shell pkg-config --cflags gtk4)
+TGT=fs-daemon
+LFLAGS=-lconfuse
 CFLAGS=-Wall -Wextra -Wpedantic -std=c11
 
-OBJS=main.o
+OBJS=main.o daemon.o config.o
 
 %.o : %.c
-	gcc -c $(CFLAGS) $(PKG) $< -o $@
+	gcc -c $(CFLAGS) $< -o $@
 
 ${TGT}: ${OBJS}
 	gcc -o ${TGT} $^ ${LFLAGS}
