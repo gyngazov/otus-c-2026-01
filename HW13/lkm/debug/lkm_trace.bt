@@ -1,0 +1,118 @@
+/*
+ * lkm_trace.bt — готовый bpftrace-скрипт для модуля lkm_debug
+ *
+ * Назначение:
+ *   Полноценный сценарий трассировки: входы/выходы функций модуля,
+ *   ioctl-вызовы из userspace, периодическая histogram latency.
+ *
+ * Запуск:
+ *   insmod lkm_debug.ko
+ *   bpftrace debug/lkm_trace.bt
+ *
+ * В другом терминале:
+ *   cat /proc/lkm_debug
+ *   ./userspace/ioctl_test ping
+ *   ./userspace/ioctl_test slow
+ *   ./userspace/ioctl_test write "hello"
+ */
+
+BEGIN
+{
+    printf("lkm_trace.bt started\n");
+    printf("%-8s %-16s %-30s %s\n", "PID", "COMM", "PROBE", "INFO");
+}
+
+/*
+ * lkm_do_init — обёртка инициализации.
+ * Срабатывает при insmod модуля (ONLY если bpftrace запущен до insmod).
+ * Если модуль уже загружен — этот probe не сработает, что нормально.
+ */
+kprobe:lkm_do_init
+{
+    printf("%-8d %-16s %-30s\n", pid, comm, "lkm_do_init:enter");
+}
+
+kretprobe:lkm_do_init
+{
+    printf("%-8d %-16s %-30s ret=%d\n", pid, comm, "lkm_do_init:exit", retval);
+}
+
+/*
+ * lkm_do_exit — обёртка выгрузки.
+ * Срабатывает при rmmod.
+ */
+kprobe:lkm_do_exit
+{
+    printf("%-8d %-16s %-30s\n", pid, comm, "lkm_do_exit:enter");
+}
+
+/*
+ * lkm_slow_work — «медленная» функция.
+ * На входе сохраняем timestamp по tid — каждый поток имеет свой таймер.
+ */
+kprobe:lkm_slow_work
+{
+    @slow_start[tid] = nsecs;
+    printf("%-8d %-16s %-30s iterations=%u\n",
+           pid, comm, "lkm_slow_work:enter", (uint32)arg0);
+}
+
+/*
+ * kretprobe срабатывает на выходе из lkm_slow_work.
+ * Предикат /@slow_start[tid]/ — выполняет блок только если
+ * timestamp был записан на входе (не пропустим lkm_slow_work без kprobe).
+ */
+kretprobe:lkm_slow_work
+/@slow_start[tid]/
+{
+    $lat = (nsecs - @slow_start[tid]) / 1000;
+    printf("%-8d %-16s %-30s lat=%lu us\n",
+           pid, comm, "lkm_slow_work:exit", $lat);
+    @latency_hist = hist($lat);
+    delete(@slow_start[tid]);
+}
+
+/* Вход в ioctl-обработчик модуля */
+kprobe:lkm_ioctl
+{
+    printf("%-8d %-16s %-30s cmd=0x%x\n",
+           pid, comm, "lkm_ioctl", (uint32)arg1);
+}
+
+/* Вход в write-обработчик устройства */
+kprobe:lkm_write
+{
+    printf("%-8d %-16s %-30s len=%lu\n",
+           pid, comm, "lkm_write", arg2);
+}
+
+/* Вызов procfs show-функции */
+kprobe:lkm_proc_show
+{
+    printf("%-8d %-16s %-30s\n", pid, comm, "lkm_proc_show");
+}
+
+/*
+ * Tracepoint на ioctl-syscall со стороны userspace.
+ * В одном выводе видно: userspace -> sys_enter_ioctl -> lkm_ioctl.
+ */
+tracepoint:syscalls:sys_enter_ioctl
+/comm == "ioctl_test"/
+{
+    printf("%-8d %-16s %-30s fd=%d cmd=0x%x\n",
+           pid, comm, "sys_enter_ioctl", args->fd, args->cmd);
+}
+
+/* Печатаем histogram каждые 5 секунд */
+interval:s:5
+{
+    printf("\n[5s] lkm_slow_work latency histogram (us):\n");
+    print(@latency_hist);
+    clear(@latency_hist);
+}
+
+END
+{
+    printf("\nlkm_trace.bt done.\n");
+    clear(@slow_start);
+}
