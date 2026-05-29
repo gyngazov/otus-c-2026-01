@@ -6,11 +6,11 @@
 #include <linux/slab.h>
 #include <linux/ioctl.h>
 
-#define DEVICE_NAME "ring_buffer"
-#define CLASS_NAME "ring_buffer"
-#define IOCTL_MAGIC 'N'
-#define IOCTL_WIPE_RB _IO(IOCTL_MAGIC, 0)
-#define DEFAULT_SIZE 16
+#define DEVICE_NAME 	"ring_buffer"
+#define CLASS_NAME 		"ring_buffer"
+#define IOCTL_MAGIC 	'N'
+#define IOCTL_WIPE_RB 	_IO(IOCTL_MAGIC, 0)
+#define DEFAULT_SIZE 	16
 
 MODULE_LICENSE("GPL");
 static dev_t dev_num;
