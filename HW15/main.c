@@ -6,6 +6,8 @@
 
 #include "config.h"
 
+#define QRY_LEN 128
+
 struct List {
     int *arr;
     int len;
@@ -16,9 +18,9 @@ int init(struct Params params, sqlite3 *db, sqlite3_stmt *stmt);
 int main() { 
 
     struct Params params;
-    int ret = get_params(&params);
-    if (ret)
-        exit(EXIT_FAILURE);
+    int rc = get_params(&params);
+    if (rc)
+        exit(rc);
 
     if (strncmp(params.type, "sqlite", 6) != 0 || strlen(params.type) != 6) {
         puts("Wrong bd type.");
@@ -27,14 +29,33 @@ int main() {
 
     sqlite3 *db;
     sqlite3_stmt *stmt;
-    if (init(params, db, stmt) != 0)
-        exit(EXIT_FAILURE);
+    rc = init(params, db, stmt);
+  
+    if (rc == -1)
+        exit(rc);
+    else if (rc == -2)
+        goto db;
+    else if (rc < 0)
+        goto st;
+
+    rc = EXIT_FAILURE;
+    const char *tmp = "select %s from %s;";  
+    char sel[QRY_LEN];
+    if (snprintf(sel, QRY_LEN, tmp, params.column, params.table) < 0) {
+        puts("Query construction error.");
+        goto st;
+    }              
+    if (sqlite3_prepare_v2(db, sel, -1, &stmt, NULL) != SQLITE_OK) {
+        fprintf(stderr, "Failed to prepare statement: %s\n", 
+            sqlite3_errmsg(db));
+        goto db;
+    }
 
     struct List *rows = select_column(stmt);
-    sqlite3_finalize(stmt);
-    sqlite3_close(db);
+    
     if (rows == NULL)
-        exit(EXIT_FAILURE);
+        goto st;
+
     const int count = rows->len;
     int s1 = 0, s2 = 0;
     int min = rows->arr[0];
@@ -58,7 +79,12 @@ int main() {
         params.type, params.db, params.table, params.column);
     printf("count: %d\nmin: %d\nmax: %d\nsum: %d\navg: %.4f\ndev: %.4f\n", 
         count, min, max, s1, avg, dev);
-    return EXIT_SUCCESS;
+    rc = EXIT_SUCCESS;
+st:
+    sqlite3_finalize(stmt);
+db:
+    sqlite3_close(db);
+    return rc;
 }
 
 int init(struct Params params, sqlite3 *db, sqlite3_stmt *stmt)
@@ -67,61 +93,55 @@ int init(struct Params params, sqlite3 *db, sqlite3_stmt *stmt)
 
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(db));
-        sqlite3_close(db);
         return -1;
     }
 
-    const char *type = "select typeof(b) from tab limit 1;";
+    const char *type = "select typeof(b) from tab \
+                        where b is not null \
+                        limit 1;";
     rc = sqlite3_prepare_v2(db, type, -1, &stmt, NULL);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(db));
-        sqlite3_close(db);
         return -2;
     }
-    char *col_t;
-    if ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
-        col_t = sqlite3_column_text(stmt, 0);
-    } else {
-        puts("No data");
-        return -4;
-    }
 
-    const char *tmp = "select %s from %s;";  
-    char sel[128];
-    if (snprintf(sel, 128, "select %s from %s;", params.column, params.table) < 0) {
-        puts("Query construction error.");
-        return -5;
-    }              
-    rc = sqlite3_prepare_v2(db, sel, -1, &stmt, NULL);
-    if (rc != SQLITE_OK) {
-        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(db));
-        sqlite3_close(db);
-        return -6;
+    if ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
+        const char *col_t = sqlite3_column_text(stmt, 0);
+        int len = strlen(col_t);
+        if (len > 7)
+            len = 7;
+        if (strncmp(col_t, "integer", len) != 0) {
+            puts("Column type not integer.");
+            return -3;
+        }
+    } else {
+        puts("No data1");
+        return -4;
     }
     return 0;
 }
 
-// 1.на общий случай манипуляции данных 
-// 2.для разделения работы с бд и логики обработки
+// 1.на общий случай манипуляции данными
+// 2.для разделения выборки из бд и прочей логики
+
 struct List *select_column(sqlite3_stmt *stmt) 
 {
     int capacity = 2;
     int i = 0;  
     
-    int rc, *temp;
+    int *temp;
     int *arr = malloc(capacity * sizeof(int));
     if (arr == NULL) {
         perror("Initial allocation failed");
         return NULL;
     }
-    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
         if (i == capacity) {
             capacity <<= 1;
             temp = realloc(arr, capacity * sizeof(int));
             if (temp == NULL) {
                 perror("Reallocation failed");
-                free(arr);
-                return NULL;
+                goto err;
             }
             arr = temp;
         }
@@ -130,11 +150,18 @@ struct List *select_column(sqlite3_stmt *stmt)
     }
     if (i == 0) {
         puts("No data");
-        return NULL;
+        goto err;
     }
     struct List *rows = (struct List *)malloc(sizeof(struct List));
+    if (rows == NULL) {
+        puts("Memory error");
+        goto err;
+    }
     rows->arr = arr;
     rows->len = i;
     return rows;
+err:
+    free(arr);
+    return NULL;
 }
 

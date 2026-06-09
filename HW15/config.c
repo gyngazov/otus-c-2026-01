@@ -21,11 +21,11 @@ int get_params(struct Params *params)
     int res = cfg_parse(cfg, CFG_FILE);
     if (res == CFG_FILE_ERROR) {
         puts("Error opening config file.");
-        return -3;
+        return -13;
     }
     if (res == CFG_PARSE_ERROR) {
         puts("Error parsing config file.");
-        return -2;
+        return -12;
     }
     
     strncpy(params->type, cfg_getstr(cfg, "type"), STR_LEN - 1);
