@@ -44,14 +44,16 @@ int main() {
     if (snprintf(sel, QRY_LEN, tmp, params.column, params.table) < 0) {
         puts("Query construction error.");
         goto st;
-    }              
-    if (sqlite3_prepare_v2(db, sel, -1, &stmt, NULL) != SQLITE_OK) {
+    }
+    sqlite3_stmt *stm;
+    int rec = sqlite3_prepare_v2(db, sel, -1, &stm, NULL);
+    if (rec != SQLITE_OK) {
         fprintf(stderr, "Failed to prepare statement: %s\n", 
             sqlite3_errmsg(db));
         goto db;
     }
 
-    struct List *rows = select_column(stmt);
+    struct List *rows = select_column(stm);
     
     if (rows == NULL)
         goto st;
