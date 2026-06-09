@@ -2,7 +2,9 @@
 #include <sqlite3.h>
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 
+#include "config.h"
 
 struct List {
     int *arr;
@@ -11,6 +13,17 @@ struct List {
 struct List *select_column(sqlite3_stmt *stmt); 
 
 int main() { 
+
+    struct Params params;
+    int ret = get_params(&params);
+    if (ret)
+        exit(EXIT_FAILURE);
+
+    if (strncmp(params.type, "sqlite", 6) != 0 || strlen(params.type) != 6) {
+        puts("Wrong bd type.");
+        exit(EXIT_FAILURE);
+    }
+
     sqlite3 *db;
     sqlite3_stmt *stmt;
     int rc = sqlite3_open("test.db", &db);
@@ -47,7 +60,7 @@ int main() {
         return EXIT_FAILURE;
     }
 
-    const struct List *rows = select_column(stmt);
+    struct List *rows = select_column(stmt);
     sqlite3_finalize(stmt);
     sqlite3_close(db);
     if (rows == NULL)
