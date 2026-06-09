@@ -11,6 +11,7 @@ struct List {
     int len;
 };
 struct List *select_column(sqlite3_stmt *stmt); 
+int init(struct Params params, sqlite3 *db, sqlite3_stmt *stmt);
 
 int main() { 
 
@@ -26,45 +27,14 @@ int main() {
 
     sqlite3 *db;
     sqlite3_stmt *stmt;
-    int rc = sqlite3_open("test.db", &db);
-
-    if (rc != SQLITE_OK) {
-        fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(db));
-        sqlite3_close(db);
-        return EXIT_FAILURE;
-    }
-
-    const char *type = "select typeof(b) == 'integer' from tab limit 1;";
-    rc = sqlite3_prepare_v2(db, type, -1, &stmt, NULL);
-    if (rc != SQLITE_OK) {
-        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(db));
-        sqlite3_close(db);
-        return EXIT_FAILURE;
-    }
-
-    if ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
-        if (sqlite3_column_int(stmt, 0) != 1) {
-            puts("column is not integer");
-            return EXIT_FAILURE;
-        }
-    } else {
-        puts("No data");
-        return EXIT_FAILURE;
-    }
-
-    const char *sel = "SELECT b from tab;";                
-    rc = sqlite3_prepare_v2(db, sel, -1, &stmt, NULL);
-    if (rc != SQLITE_OK) {
-        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(db));
-        sqlite3_close(db);
-        return EXIT_FAILURE;
-    }
+    if (init(params, db, stmt) != 0)
+        exit(EXIT_FAILURE);
 
     struct List *rows = select_column(stmt);
     sqlite3_finalize(stmt);
     sqlite3_close(db);
     if (rows == NULL)
-        return EXIT_FAILURE;
+        exit(EXIT_FAILURE);
     const int count = rows->len;
     int s1 = 0, s2 = 0;
     int min = rows->arr[0];
@@ -83,11 +53,56 @@ int main() {
     free(rows);
     const double avg = (double) s1 / count; 
     const double dev = sqrt((s2 - (double) s1 * s1 / count) / count);
+    puts("STATISTICS");
+    printf("type: %s\ndb: %s\ntable: %s\ncolumn: %s\n",
+        params.type, params.db, params.table, params.column);
     printf("count: %d\nmin: %d\nmax: %d\nsum: %d\navg: %.4f\ndev: %.4f\n", 
         count, min, max, s1, avg, dev);
     return EXIT_SUCCESS;
 }
 
+int init(struct Params params, sqlite3 *db, sqlite3_stmt *stmt)
+{
+    int rc = sqlite3_open_v2(params.db, &db, SQLITE_OPEN_READWRITE, NULL);
+
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        return -1;
+    }
+
+    const char *type = "select typeof(b) from tab limit 1;";
+    rc = sqlite3_prepare_v2(db, type, -1, &stmt, NULL);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        return -2;
+    }
+    char *col_t;
+    if ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
+        col_t = sqlite3_column_text(stmt, 0);
+    } else {
+        puts("No data");
+        return -4;
+    }
+
+    const char *tmp = "select %s from %s;";  
+    char sel[128];
+    if (snprintf(sel, 128, "select %s from %s;", params.column, params.table) < 0) {
+        puts("Query construction error.");
+        return -5;
+    }              
+    rc = sqlite3_prepare_v2(db, sel, -1, &stmt, NULL);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        return -6;
+    }
+    return 0;
+}
+
+// 1.на общий случай манипуляции данных 
+// 2.для разделения работы с бд и логики обработки
 struct List *select_column(sqlite3_stmt *stmt) 
 {
     int capacity = 2;
