@@ -13,7 +13,7 @@ struct List {
     int len;
 };
 struct List *select_column(sqlite3_stmt *stmt); 
-int init(struct Params params, sqlite3 *db, sqlite3_stmt *stmt);
+int init(struct Params params, sqlite3 **db, sqlite3_stmt **stmt);
 
 int main() { 
 
@@ -29,7 +29,7 @@ int main() {
 
     sqlite3 *db;
     sqlite3_stmt *stmt;
-    rc = init(params, db, stmt);
+    rc = init(params, &db, &stmt);
   
     if (rc == -1)
         exit(rc);
@@ -39,21 +39,24 @@ int main() {
         goto st;
 
     rc = EXIT_FAILURE;
-    const char *tmp = "select %s from %s;";  
+    const char *tmp = "select %s \
+                        from %s \
+                        where %s is not null;";  
     char sel[QRY_LEN];
-    if (snprintf(sel, QRY_LEN, tmp, params.column, params.table) < 0) {
+    if (snprintf(sel, QRY_LEN, tmp, 
+        params.column, params.table, params.column) < 0) {
         puts("Query construction error.");
         goto st;
     }
-    sqlite3_stmt *stm;
-    int rec = sqlite3_prepare_v2(db, sel, -1, &stm, NULL);
+    
+    int rec = sqlite3_prepare_v2(db, sel, -1, &stmt, NULL);
     if (rec != SQLITE_OK) {
         fprintf(stderr, "Failed to prepare statement: %s\n", 
             sqlite3_errmsg(db));
         goto db;
     }
 
-    struct List *rows = select_column(stm);
+    struct List *rows = select_column(stmt);
     
     if (rows == NULL)
         goto st;
@@ -77,9 +80,9 @@ int main() {
     const double avg = (double) s1 / count; 
     const double dev = sqrt((s2 - (double) s1 * s1 / count) / count);
     puts("STATISTICS");
-    printf("type: %s\ndb: %s\ntable: %s\ncolumn: %s\n",
+    printf("tip: %s\ndbs: %s\ntab: %s\ncol: %s\n",
         params.type, params.db, params.table, params.column);
-    printf("count: %d\nmin: %d\nmax: %d\nsum: %d\navg: %.4f\ndev: %.4f\n", 
+    printf("cnt: %d\nmin: %d\nmax: %d\nsum: %d\navg: %.4f\ndev: %.4f\n", 
         count, min, max, s1, avg, dev);
     rc = EXIT_SUCCESS;
 st:
@@ -89,31 +92,37 @@ db:
     return rc;
 }
 
-int init(struct Params params, sqlite3 *db, sqlite3_stmt *stmt)
+int init(struct Params params, sqlite3 **db, sqlite3_stmt **stmt)
 {
-    int rc = sqlite3_open_v2(params.db, &db, SQLITE_OPEN_READWRITE, NULL);
+    int rc = sqlite3_open_v2(params.db, db, SQLITE_OPEN_READWRITE, NULL);
 
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(db));
+        fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(*db));
         return -1;
     }
 
-    const char *type = "select typeof(b) from tab \
-                        where b is not null \
+    const char *tmp = "select typeof(%s) from %s \
+                        where %s is not null \
                         limit 1;";
-    rc = sqlite3_prepare_v2(db, type, -1, &stmt, NULL);
+    char sel[QRY_LEN];
+    if (snprintf(sel, QRY_LEN, tmp, 
+        params.column, params.table, params.column) < 0) {
+        puts("Query construction error.");
+        return -2;
+    }
+    rc = sqlite3_prepare_v2(*db, sel, -1, stmt, NULL);
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(db));
+        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(*db));
         return -2;
     }
 
-    if ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
-        const char *col_t = sqlite3_column_text(stmt, 0);
+    if ((rc = sqlite3_step(*stmt)) == SQLITE_ROW) {
+        const char *col_t = sqlite3_column_text(*stmt, 0);
         int len = strlen(col_t);
         if (len > 7)
             len = 7;
         if (strncmp(col_t, "integer", len) != 0) {
-            puts("Column type not integer.");
+            printf("Column type %s not integer.\n", col_t);
             return -3;
         }
     } else {
