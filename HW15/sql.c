@@ -7,6 +7,10 @@
 #include "config.h"
 
 #define QRY_LEN 128
+#define FREE(ptr) do { \
+    free(ptr); \
+    ptr = NULL; \
+} while (0)
 
 struct List {
     int *arr;
@@ -18,10 +22,8 @@ int init(struct Params params, sqlite3 **db, sqlite3_stmt **stmt);
 int main() { 
 
     struct Params params;
-    int rc = get_params(&params);
-    if (rc)
-        exit(rc);
-
+    get_params(&params);
+    
     if (strncmp(params.type, "sqlite", 6) != 0 || strlen(params.type) != 6) {
         puts("Wrong bd type.");
         exit(EXIT_FAILURE);
@@ -29,7 +31,7 @@ int main() {
 
     sqlite3 *db;
     sqlite3_stmt *stmt;
-    rc = init(params, &db, &stmt);
+    int rc = init(params, &db, &stmt);
   
     if (rc == -1)
         exit(rc);
@@ -75,8 +77,8 @@ int main() {
         if (r > max)
             max = r;
     }
-    free(rows->arr);
-    free(rows);
+    FREE(rows->arr);
+    FREE(rows);
     const double avg = (double) s1 / count; 
     const double dev = sqrt((s2 - (double) s1 * s1 / count) / count);
     puts("STATISTICS");
@@ -172,7 +174,7 @@ struct List *select_column(sqlite3_stmt *stmt)
     rows->len = i;
     return rows;
 err:
-    free(arr);
+    FREE(arr);
     return NULL;
 }
 

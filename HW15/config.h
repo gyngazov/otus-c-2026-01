@@ -10,4 +10,4 @@ struct Params {
     char column[STR_LEN];
 };
 
-int get_params(struct Params *params);
+void get_params(struct Params *params);
