@@ -2,7 +2,7 @@ TGT=sql
 CFLAGS=-Wall -Wextra -Wpedantic -std=c11
 LIBS=-lconfuse -lm -lsqlite3
 
-OBJS=${TGT}.o config.o
+OBJS=${TGT}.o sqlite.o config.o
 
 %.o : %.c
 	gcc -c $(CFLAGS) $< -o $@
