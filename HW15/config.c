@@ -19,24 +19,24 @@ void get_params(struct Params *params)
     cfg = cfg_init(opts, CFGF_NONE);
     cfg_add_searchpath(cfg, "./");
     int res = cfg_parse(cfg, CFG_FILE);
-    char *err;
+    char *err = "";
     if (res == CFG_FILE_ERROR) {
         err = "Error opening config file.";
-        goto err;
+        goto ex;
     }
     if (res == CFG_PARSE_ERROR) {
         err = "Error parsing config file.";
-        goto err;
+        goto ex;
     }
     
     strncpy(params->type, cfg_getstr(cfg, "type"), STR_LEN - 1);
     strncpy(params->db, cfg_getstr(cfg, "db"), STR_LEN - 1);
     strncpy(params->table, cfg_getstr(cfg, "table"), STR_LEN - 1);
     strncpy(params->column, cfg_getstr(cfg, "column"), STR_LEN - 1);
-    cfg_free(cfg);
-    return;
-err:
+
+ex:
     cfg_free(cfg);
     puts(err);
-    exit(EXIT_FAILURE);
+    if (res)
+        exit(EXIT_FAILURE);
 }
