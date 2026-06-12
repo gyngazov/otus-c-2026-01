@@ -1,0 +1,11 @@
+STATISTICS
+tip: sqlite
+dbs: test.db
+tab: tab
+col: b
+cnt: 20
+min: 2
+max: 704
+sum: 1723
+avg: 86.1500
+dev: 155.6542

@@ -7,15 +7,25 @@
 #include "config.h"
 
 #define QRY_LEN 128
-#define FREE(ptr) do { \
-    free(ptr); \
-    ptr = NULL; \
-} while (0)
+#define FREE1(ptr)   do { \
+                    free(ptr); \
+                    ptr = NULL; \
+                    } while (0)
 
 struct List {
     int *arr;
     int len;
 };
+
+typedef enum {
+    ERR_NOERR = 0,
+    ERR_NOTOPEN,
+    ERR_BADQUERY,
+    ERR_UNPREP,
+    ERR_NOTINTCOL,
+    ERR_NODATA
+} Errors;
+
 struct List *select_column(sqlite3_stmt *stmt); 
 int init(struct Params params, sqlite3 **db, sqlite3_stmt **stmt);
 
@@ -33,11 +43,11 @@ int main() {
     sqlite3_stmt *stmt;
     int rc = init(params, &db, &stmt);
   
-    if (rc == -1)
+    if (rc == ERR_NOTOPEN)
         exit(rc);
-    else if (rc == -2)
+    else if (rc == ERR_BADQUERY || rc == ERR_UNPREP)
         goto db;
-    else if (rc < 0)
+    else if (rc != 0)
         goto st;
 
     rc = EXIT_FAILURE;
@@ -77,8 +87,8 @@ int main() {
         if (r > max)
             max = r;
     }
-    FREE(rows->arr);
-    FREE(rows);
+    FREE1(rows->arr);
+    FREE1(rows);
     const double avg = (double) s1 / count; 
     const double dev = sqrt((s2 - (double) s1 * s1 / count) / count);
     puts("STATISTICS");
@@ -100,7 +110,7 @@ int init(struct Params params, sqlite3 **db, sqlite3_stmt **stmt)
 
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(*db));
-        return -1;
+        return ERR_NOTOPEN;
     }
 
     const char *tmp = "select typeof(%s) from %s \
@@ -110,26 +120,26 @@ int init(struct Params params, sqlite3 **db, sqlite3_stmt **stmt)
     if (snprintf(sel, QRY_LEN, tmp, 
         params.column, params.table, params.column) < 0) {
         puts("Query construction error.");
-        return -2;
+        return ERR_BADQUERY;
     }
     rc = sqlite3_prepare_v2(*db, sel, -1, stmt, NULL);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(*db));
-        return -2;
+        return ERR_UNPREP;
     }
 
     if ((rc = sqlite3_step(*stmt)) == SQLITE_ROW) {
-        const char *col_t = sqlite3_column_text(*stmt, 0);
+        char *col_t = sqlite3_column_text(*stmt, 0);
         int len = strlen(col_t);
         if (len > 7)
             len = 7;
         if (strncmp(col_t, "integer", len) != 0) {
             printf("Column type %s not integer.\n", col_t);
-            return -3;
+            return ERR_NOTINTCOL;
         }
     } else {
-        puts("No data1");
-        return -4;
+        puts("No data");
+        return ERR_NODATA;
     }
     return 0;
 }
@@ -174,7 +184,7 @@ struct List *select_column(sqlite3_stmt *stmt)
     rows->len = i;
     return rows;
 err:
-    FREE(arr);
+    FREE1(arr);
     return NULL;
 }
 
