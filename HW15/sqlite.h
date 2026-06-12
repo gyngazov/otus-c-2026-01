@@ -1,12 +1,13 @@
 #include <sqlite3.h>
 #include <stdio.h>
-#include "config.h"
 
-#define QRY_LEN 128
-#define FREE(ptr) do { \
-    free(ptr); \
-    ptr = NULL; \
-} while (0)
+//#include "config.h"
+
+#define QRY_LEN     128
+#define FREE(ptr)   do { \
+                    free(ptr); \
+                    ptr = NULL; \
+                    } while (0)
 
 struct List {
     int *arr;
