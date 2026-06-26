@@ -6,7 +6,7 @@
 
 #include "config.h"
 
-void get_params(struct Params *params) 
+void  get_params(struct Params *params) 
 {
     cfg_opt_t opts[] = {
         CFG_STR("type", "sqlite", CFGF_NONE),
@@ -22,21 +22,21 @@ void get_params(struct Params *params)
     char *err;
     if (res == CFG_FILE_ERROR) {
         err = "Error opening config file.";
-        goto err;
+        goto  err;
     }
     if (res == CFG_PARSE_ERROR) {
         err = "Error parsing config file.";
-        goto err;
+        goto  err;
     }
     
     strncpy(params->type, cfg_getstr(cfg, "type"), STR_LEN - 1);
     strncpy(params->db, cfg_getstr(cfg, "db"), STR_LEN - 1);
     strncpy(params->table, cfg_getstr(cfg, "table"), STR_LEN - 1);
     strncpy(params->column, cfg_getstr(cfg, "column"), STR_LEN - 1);
-    cfg_free(cfg);
-    return;
-err:
-    cfg_free(cfg);
-    puts(err);
-    exit(EXIT_FAILURE);
+    cfg_free( cfg);
+    return ;
+  err:
+    cfg_free( cfg);
+    puts( err);
+    exit( EXIT_FAILURE);
 }
