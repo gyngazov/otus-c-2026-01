@@ -7,12 +7,6 @@
 #define GL_GLEXT_PROTOTYPES
 #define STEP 5
 
-
-
-void display();
-void specialKeys();
-
- 
 double rotate_x = 0;
 double rotate_y = 0;
 
