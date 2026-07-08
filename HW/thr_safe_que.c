@@ -15,12 +15,14 @@ typedef struct {
     pthread_mutex_t mutex;
     pthread_cond_t cond;
     int shutdown;
+    int size;
 } ThreadSafeQueue;
 
 void queue_init(ThreadSafeQueue *q) {
     q->head = NULL;
     q->tail = NULL;
     q->shutdown = 0;
+    q->size = 0;
     pthread_mutex_init(&q->mutex, NULL);
     pthread_cond_init(&q->cond, NULL);
 }
@@ -38,7 +40,7 @@ void queue_destroy(ThreadSafeQueue *q) {
     pthread_cond_destroy(&q->cond);
 }
 
-void queue_push(ThreadSafeQueue *q, void *data) {
+int queue_push(ThreadSafeQueue *q, void *data) {
     Node *new_node = malloc(sizeof(Node));
     if (!new_node) return;
     
@@ -54,10 +56,12 @@ void queue_push(ThreadSafeQueue *q, void *data) {
         q->tail->next = new_node;
         q->tail = new_node;
     }
+    q->size += 1;
 
     // Wake up one worker thread waiting for data
     pthread_cond_signal(&q->cond); 
     pthread_mutex_unlock(&q->mutex);
+    return q->size;
 }
 void* queue_pop(ThreadSafeQueue *q) {
     pthread_mutex_lock(&q->mutex);
