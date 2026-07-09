@@ -2,21 +2,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-// Structure for queue nodes
-typedef struct Node {
-    void *data;
-    struct Node *next;
-} Node;
-
-// Structure for the thread-safe queue
-typedef struct {
-    Node *head;
-    Node *tail;
-    pthread_mutex_t mutex;
-    pthread_cond_t cond;
-    int shutdown;
-    int size;
-} ThreadSafeQueue;
+#include "thsque.h"
 
 void queue_init(ThreadSafeQueue *q) {
     q->head = NULL;
@@ -40,9 +26,13 @@ void queue_destroy(ThreadSafeQueue *q) {
     pthread_cond_destroy(&q->cond);
 }
 
+/**
+ * По пушам мониторим длину очереди.
+ */
 int queue_push(ThreadSafeQueue *q, void *data) {
     Node *new_node = malloc(sizeof(Node));
-    if (!new_node) return;
+    if (!new_node) 
+        return -1;
     
     new_node->data = data;
     new_node->next = NULL;
@@ -58,7 +48,6 @@ int queue_push(ThreadSafeQueue *q, void *data) {
     }
     q->size += 1;
 
-    // Wake up one worker thread waiting for data
     pthread_cond_signal(&q->cond); 
     pthread_mutex_unlock(&q->mutex);
     return q->size;
@@ -66,23 +55,20 @@ int queue_push(ThreadSafeQueue *q, void *data) {
 void* queue_pop(ThreadSafeQueue *q) {
     pthread_mutex_lock(&q->mutex);
 
-    // Use a while loop to handle spurious wakeups
-    while (q->head == NULL && !q->shutdown) {
+    while (q->head == NULL && !q->shutdown)
         pthread_cond_wait(&q->cond, &q->mutex);
-    }
 
     if (q->shutdown && q->head == NULL) {
         pthread_mutex_unlock(&q->mutex);
-        return NULL; // Queue is closing down
+        return NULL; // и не ждать
     }
 
     Node *temp = q->head;
     void *data = temp->data;
     q->head = q->head->next;
 
-    if (q->head == NULL) {
+    if (q->head == NULL)
         q->tail = NULL;
-    }
 
     free(temp);
     pthread_mutex_unlock(&q->mutex);
@@ -91,6 +77,6 @@ void* queue_pop(ThreadSafeQueue *q) {
 void queue_shutdown(ThreadSafeQueue *q) {
     pthread_mutex_lock(&q->mutex);
     q->shutdown = 1;
-    pthread_cond_broadcast(&q->cond); // Wake up all waiting threads
+    pthread_cond_broadcast(&q->cond);
     pthread_mutex_unlock(&q->mutex);
 }
