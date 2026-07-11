@@ -47,6 +47,7 @@ int main (int argc, char **argv)
     }
     
     queue_shutdown(&q);
+    puts("shutdown");
 
     for (int i = 0; i < n; i++) {
         err = pthread_join(rthrds[i], &res);
