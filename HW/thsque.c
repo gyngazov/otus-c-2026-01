@@ -71,6 +71,7 @@ void* queue_pop(ThreadSafeQueue *q) {
         q->tail = NULL;
 
     free(temp);
+    q->size -= 1;
     pthread_mutex_unlock(&q->mutex);
     return data;
 }
