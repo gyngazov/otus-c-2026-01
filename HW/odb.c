@@ -1,78 +1,116 @@
-#include <stdio.h>
 #include <stdlib.h>
-#include <sql.h>      /* ODBC API */
-#include <sqlext.h>   /* Дополнительные функции ODBC */
-#include <string.h>
+#include <stdio.h>
+#include <sql.h>
+#include <sqlext.h>
+#include <sqltypes.h>
 
-#define PERSONID_LEN 2
-#define LASTNAME_LEN 256
-#define FIRSTNAME_LEN 256
-#define ADDRESS_LEN 256
-#define CITY_LEN 256
+SQLHENV        V_OD_Env;         // Handle ODBC environment
+long           V_OD_erg;         // result of functions
+SQLHDBC        V_OD_hdbc;        // Handle connection
+char           V_OD_stat[10];    // Status SQL
+SQLINTEGER     V_OD_err,V_OD_rowanz,V_OD_id;
+SQLSMALLINT    V_OD_mlen,V_OD_colanz;
+char           V_OD_msg[200],V_OD_buffer[200];
+SQLHSTMT       V_OD_hstmt;
 
-int main() {
-    SQLHENV henv = SQL_NULL_HENV;        /* Дескриптор среды ODBC */
-    SQLHDBC hdbc = SQL_NULL_HDBC;        /* Дескриптор подключения */
-    SQLHSTMT hstmt = SQL_NULL_HSTMT;      /* Дескриптор оператора */
-    SQLRETURN retcode;
-
-    /* Буферы для хранения данных из результирующего набора */
-    SQLCHAR strFirstName[FIRSTNAME_LEN], strLastName[LASTNAME_LEN];
-    SQLCHAR strAddress[ADDRESS_LEN], strCity[CITY_LEN];
-
-    /* Длины буферов */
-    SQLLEN lenFirstName = 0, lenLastName = 0, lenAddress = 0, lenCity = 0;
-
-    /* Переменная для ID персоны */
-    SQLINTEGER cPersonId = 0, lenPersonId = 0;
-
-    int i = 0;
-
-    // 1. Все выделяем дескрипторы среды и подключения
-    retcode = SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv);
-    CHECK_ERROR(retcode, "SQLAllocHandle(ENV)", SQL_HANDLE_ENV);
-
-    retcode = SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc);
-    CHECK_ERROR(retcode, "SQLAllocHandle(DBC)", SQL_HANDLE_DBC);
-
-    // 2. Устанавливаем версию ODBC
-    retcode = SQLSetEnvAttr(henv, SQL_ATTR_ODBC_VERSION, (SQLPOINTER)SQL_OV_ODBC3, 0);
-    CHECK_ERROR(retcode, "SQLSetEnvAttr(ODBC_VERSION)", SQL_HANDLE_ENV);
-
-    // 3. Создаём оператор
-    retcode = SQLAllocStmt(hdbc, &hstmt);
-    CHECK_ERROR(retcode, "SQLAllocStmt(HSTMT)", SQL_HANDLE_STMT);
-
-    // 4. Выполняем запрос SELECT
-    retcode = SQLExecDirect(hstmt, (SQLCHAR*)"SELECT * FROM Persons WHERE PersonID = ?", SQL_NTS);
-    CHECK_ERROR(retcode, "SQLExecDirect(SELECT)", SQL_HANDLE_STMT);
-
-    // 5. Связываем столбцы результата с переменными C
-    retcode = SQLBindCol(hstmt, 1, SQL_C_CHAR, strFirstName, LASTNAME_LEN, &lenFirstName);
-    CHECK_ERROR(retcode, "SQLBindCol(1, SQL_C_CHAR)", SQL_HANDLE_STMT);
-
-    retcode = SQLBindCol(hstmt, 2, SQL_C_CHAR, strLastName, LASTNAME_LEN, &lenLastName);
-    CHECK_ERROR(retcode, "SQLBindCol(2, SQL_C_CHAR)", SQL_HANDLE_STMT);
-
-    retcode = SQLBindCol(hstmt, 3, SQL_C_CHAR, strAddress, ADDRESS_LEN, &lenAddress);
-    CHECK_ERROR(retcode, "SQLBindCol(3, SQL_C_CHAR)", SQL_HANDLE_STMT);
-
-    retcode = SQLBindCol(hstmt, 4, SQL_C_CHAR, strCity, CITY_LEN, &lenCity);
-    CHECK_ERROR(retcode, "SQLBindCol(4, SQL_C_CHAR)", SQL_HANDLE_STMT);
-
-    // 6. Извлекаем записи и выводим их
-    while ((retcode = SQLFetch(hstmt)) != SQL_NO_DATA) {
-        printf("ID: %d, Фамилия: %s, Имя: %s, Адрес: %s, Город: %s
-",
-               cPersonId, strPersonId, strFirstName, strAddress, strCity);
-    }
-
-    // 7. Освобождаем ресурсы
-    SQLFreeStmt(hstmt, SQL_DROP);
-    SQLDisconnect(hdbc);
-    SQLFreeConnect(hdbc);
-    SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
-    SQLFreeHandle(SQL_HANDLE_ENV, henv);
-
-    return 0;
+int main(int argc,char *argv[])
+{
+  // 1. allocate Environment handle and register version
+  V_OD_erg=SQLAllocHandle(SQL_HANDLE_ENV,SQL_NULL_HANDLE,&V_OD_Env);
+  if ((V_OD_erg != SQL_SUCCESS) && (V_OD_erg != SQL_SUCCESS_WITH_INFO))
+  {
+     printf("Error AllocHandle\n");
+     exit(0);
+  }
+  V_OD_erg=SQLSetEnvAttr(V_OD_Env, SQL_ATTR_ODBC_VERSION,
+                         (void*)SQL_OV_ODBC3, 0);
+  if ((V_OD_erg != SQL_SUCCESS) && (V_OD_erg != SQL_SUCCESS_WITH_INFO))
+  {
+     printf("Error SetEnv\n");
+     SQLFreeHandle(SQL_HANDLE_ENV, V_OD_Env);
+     exit(0);
+  }
+  // 2. allocate connection handle, set timeout
+  V_OD_erg = SQLAllocHandle(SQL_HANDLE_DBC, V_OD_Env, &V_OD_hdbc);
+  if ((V_OD_erg != SQL_SUCCESS) && (V_OD_erg != SQL_SUCCESS_WITH_INFO))
+  {
+     printf("Error AllocHDB %d\n",V_OD_erg);
+     SQLFreeHandle(SQL_HANDLE_ENV, V_OD_Env);
+     exit(0);
+  }
+  SQLSetConnectAttr(V_OD_hdbc, SQL_LOGIN_TIMEOUT, (SQLPOINTER *)5, 0);
+  // 3. Connect to the datasource "web"
+  V_OD_erg = SQLConnect(V_OD_hdbc, (SQLCHAR*) "web", SQL_NTS,
+                        (SQLCHAR*) "christa", SQL_NTS,
+                        (SQLCHAR*) "", SQL_NTS);
+  if ((V_OD_erg != SQL_SUCCESS) && (V_OD_erg != SQL_SUCCESS_WITH_INFO))
+  {
+     printf("Error SQLConnect %d\n",V_OD_erg);
+     SQLGetDiagRec(SQL_HANDLE_DBC, V_OD_hdbc,1, V_OD_stat, &V_OD_err,
+                   V_OD_msg,100,&V_OD_mlen);
+     printf("%s (%d)\n",V_OD_msg,V_OD_err);
+     SQLFreeHandle(SQL_HANDLE_ENV, V_OD_Env);
+     exit(0);
+  }
+  printf("Connected !\n");
+  V_OD_erg=SQLAllocHandle(SQL_HANDLE_STMT, V_OD_hdbc, &V_OD_hstmt);
+  if ((V_OD_erg != SQL_SUCCESS) && (V_OD_erg != SQL_SUCCESS_WITH_INFO))
+  {
+     printf("Fehler im AllocStatement %d\n",V_OD_erg);
+     SQLGetDiagRec(SQL_HANDLE_DBC, V_OD_hdbc,1, V_OD_stat,
+                   &V_OD_err,V_OD_msg,100,&V_OD_mlen);
+     printf("%s (%d)\n",V_OD_msg,V_OD_err);
+     SQLDisconnect(V_OD_hdbc);
+     SQLFreeHandle(SQL_HANDLE_DBC,V_OD_hdbc);
+     SQLFreeHandle(SQL_HANDLE_ENV, V_OD_Env);
+     exit(0);
+  }
+  SQLBindCol(V_OD_hstmt,1,SQL_C_CHAR, &V_OD_buffer,150,&V_OD_err);
+  SQLBindCol(V_OD_hstmt,2,SQL_C_ULONG,&V_OD_id,150,&V_OD_err);
+  V_OD_erg=SQLExecDirect(V_OD_hstmt,"SELECT dtname,iduser \
+                         FROM tkeyuser order by iduser",SQL_NTS);
+  if ((V_OD_erg != SQL_SUCCESS) && (V_OD_erg != SQL_SUCCESS_WITH_INFO))
+  {
+     printf("Error in Select %d\n",V_OD_erg);
+     SQLGetDiagRec(SQL_HANDLE_DBC, V_OD_hdbc,1, V_OD_stat,&V_OD_err,
+                   V_OD_msg,100,&V_OD_mlen);
+     printf("%s (%d)\n",V_OD_msg,V_OD_err);
+     SQLFreeHandle(SQL_HANDLE_STMT,V_OD_hstmt);
+     SQLDisconnect(V_OD_hdbc);
+     SQLFreeHandle(SQL_HANDLE_DBC,V_OD_hdbc);
+     SQLFreeHandle(SQL_HANDLE_ENV, V_OD_Env);
+     exit(0);
+  }
+  V_OD_erg=SQLNumResultCols(V_OD_hstmt,&V_OD_colanz);
+  if ((V_OD_erg != SQL_SUCCESS) && (V_OD_erg != SQL_SUCCESS_WITH_INFO))
+  {
+     SQLFreeHandle(SQL_HANDLE_STMT,V_OD_hstmt);
+     SQLDisconnect(V_OD_hdbc);
+     SQLFreeHandle(SQL_HANDLE_DBC,V_OD_hdbc);
+     SQLFreeHandle(SQL_HANDLE_ENV, V_OD_Env);
+     exit(0);
+  }
+  printf("Number of Columns %d\n",V_OD_colanz);
+  V_OD_erg=SQLRowCount(V_OD_hstmt,&V_OD_rowanz);
+  if ((V_OD_erg != SQL_SUCCESS) && (V_OD_erg != SQL_SUCCESS_WITH_INFO))
+  {
+     printf("Number ofRowCount %d\n",V_OD_erg);
+     SQLFreeHandle(SQL_HANDLE_STMT,V_OD_hstmt);
+     SQLDisconnect(V_OD_hdbc);
+     SQLFreeHandle(SQL_HANDLE_DBC,V_OD_hdbc);
+     SQLFreeHandle(SQL_HANDLE_ENV, V_OD_Env);
+     exit(0);
+  }
+  printf("Number of Rows %d\n",V_OD_rowanz);
+  V_OD_erg=SQLFetch(V_OD_hstmt);
+  while(V_OD_erg != SQL_NO_DATA)
+  {
+    printf("Result: %d %s\n",V_OD_id,V_OD_buffer);
+    V_OD_erg=SQLFetch(V_OD_hstmt);
+  };
+  SQLFreeHandle(SQL_HANDLE_STMT,V_OD_hstmt);
+  SQLDisconnect(V_OD_hdbc);
+  SQLFreeHandle(SQL_HANDLE_DBC,V_OD_hdbc);
+  SQLFreeHandle(SQL_HANDLE_ENV, V_OD_Env);
+  return(0);
 }
