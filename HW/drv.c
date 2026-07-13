@@ -3,55 +3,46 @@
 # include <sql.h>
 # include <sqlext.h>
  
-main()
+int main()
 {
     HENV henv = NULL;
     HDBC hdbc = NULL;
     SQLRETURN ret;
  
-    /* Initialize the ODBC environment handle. */
     ret = SQLAllocHandle( SQL_HANDLE_ENV, NULL, &henv );
     if (ret != SQL_SUCCESS)
         puts("no env");
-    /* Set the ODBC version to version 3 (the highest version) */
+
     ret = SQLSetEnvAttr( henv, SQL_ATTR_ODBC_VERSION,
         (void *)SQL_OV_ODBC3, 0 );
     if (ret != SQL_SUCCESS)
         puts("no attr");
  
-    /* Allocate the connection handle. */
     ret = SQLAllocHandle( SQL_HANDLE_DBC, henv, &hdbc );
     if (ret != SQL_SUCCESS)
         puts("no handle");
+
+    char *conn = "Driver={ODBC Driver 17 for SQL Server};\
+        Server=localhost;\
+        Database=msdb;Uid=sa;Pwd=_V0cabular;\
+        TrustServerCertificate=yes";
  
-    /*
-    ** Fill the connection string with the minimum
-    ** connection information.
-    */
-    char *conn = "Server=localhost;\
-        Database=msdb;User Id=sa;Password=_V0cabular";
- 
-    /* Connect to the database using the connection string. */
-    ret = SQLDriverConnect( hdbc,    /* Connection handle */
-        0,                     /* Window handle */
-        (SQLCHAR *) conn,         /* Connection string */
-        SQL_NTS,               /* This is a null-terminated string */
-        (SQLCHAR *)NULL,       /* Output (result) connection string */
-        SQL_NTS,               /* This is a null-terminated string */
-        0,                     /* Length of output connect string */
-        SQL_DRIVER_NOPROMPT ); /* Don't display a prompt window */
- 
+    ret = SQLDriverConnect(hdbc, 0,
+        (SQLCHAR *) conn, SQL_NTS,
+        (SQLCHAR *) NULL, SQL_NTS,
+        0, SQL_DRIVER_NOPROMPT);
+    SQLCHAR szSqlState; // Буфер для SQLSTATE (5 символов)
+    SQLINTEGER pfNativeError; // Нативный код ошибки
+    SQLCHAR szErrorMsg[256];
+    
     if (ret != SQL_SUCCESS)
-        puts("no drv");
-    /* Disconnect from the database. */
-    SQLDisconnect( hdbc );
+        ret = SQLError(henv, hdbc, NULL
+            , szSqlState, &pfNativeError, szErrorMsg
+            , sizeof(szErrorMsg), NULL);
+    puts(szErrorMsg);
+    SQLDisconnect(hdbc);
+    SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
+    SQLFreeHandle(SQL_HANDLE_ENV, henv);
  
-    /* Free the connection handle. */
-    SQLFreeHandle( SQL_HANDLE_DBC, hdbc );
- 
-    /* Free the environment handle. */
-    SQLFreeHandle( SQL_HANDLE_ENV, henv );
- 
-    /* Exit this program. */
-    return(0);
+    return EXIT_SUCCESS;
 }
