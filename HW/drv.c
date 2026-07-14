@@ -2,7 +2,9 @@
 # include <stdlib.h>
 # include <sql.h>
 # include <sqlext.h>
- 
+
+void diag_stmt(SQLHSTMT hstmt);
+
 int main()
 {
     HENV henv = NULL;
@@ -56,20 +58,36 @@ int main()
         puts("no stmt");
         goto err2;
     }
-    const char *qry = "select id, code ,val from barcodes";
-    ret = SQLExecDirect(hstmt, qry, SQL_NTS);
+    const char *qry = "select 'abc'"; //select id, code ,val from barcodes";
+    ret = SQLExecDirect(hstmt, (SQLCHAR *) qry, SQL_NTS);
     if (ret != SQL_SUCCESS) {
         SQLError(henv, hdbc, hstmt
             , szSqlState, &pfNativeError, szErrorMsg
             , sizeof(szErrorMsg), NULL);
         puts(szErrorMsg);
-        printf("ret hstmt: %d\n", ret);
-        goto err3;
+        printf("ret exec: %d\n", ret);
+        diag_stmt(hstmt);
+        //goto err3;
     }
-    do {
+
+    SQLINTEGER len;
+    SQLCHAR buffer[255];
+    ret = SQLBindCol(hstmt, 1, SQL_C_CHAR, buffer, len, &len);
+    //CHECK_ERROR(ret, "SQLBindCol (id)", hstmt, SQL_HANDLE_STMT);
+    printf("bind ret: %d\n", ret);
+    ret = 0;
+    int i = 0; 
+    while (i++ < 3) {
         ret = SQLFetch(hstmt);
-        printf("%d\n", ret);
-    } while (ret != SQL_NO_DATA_FOUND);
+        printf("ret: % d , id: %s\n", ret, buffer);
+        // if (ret == SQL_ERROR) {
+        //     puts("err");
+        //     break;
+        // } else if (ret == SQL_NO_DATA_FOUND) {
+        //     puts("data end");
+        //     break;
+        // }
+    }
 
     return EXIT_SUCCESS;
 err3:    
@@ -81,4 +99,22 @@ err1:
     SQLFreeHandle(SQL_HANDLE_ENV, henv);
 err0:
     return EXIT_FAILURE;
+}
+
+void diag_stmt(SQLHSTMT hstmt)
+{
+    SQLCHAR buffer[SQL_MAX_MESSAGE_LENGTH + 1]; // Буфер для сообщения об ошибке
+    SQLCHAR sqlstate[SQL_SQLSTATE_SIZE + 1]; // Буфер для кода SQLSTATE
+    SQLINTEGER sqlcode; // Переменная для собственного кода ошибки
+    SQLSMALLINT length; // Длина текста сообщения
+    SQLSMALLINT i; // Счетчик записей диагностики
+    i = 1;
+    while (SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 
+        i, sqlstate, &sqlcode, buffer, SQL_MAX_MESSAGE_LENGTH + 1, &length) == SQL_SUCCESS) {
+            printf("SQLSTATE: %s", sqlstate);
+            printf("Native Error Code: %ld", sqlcode);
+            printf("Message: %s", buffer);
+            i++;
+    }
+    
 }
