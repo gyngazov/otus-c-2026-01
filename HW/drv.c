@@ -70,16 +70,14 @@ int main()
         //goto err3;
     }
 
-    SQLINTEGER len;
-    SQLCHAR buffer[255];
-    ret = SQLBindCol(hstmt, 1, SQL_C_CHAR, buffer, len, &len);
-    //CHECK_ERROR(ret, "SQLBindCol (id)", hstmt, SQL_HANDLE_STMT);
+    SQLLEN cbTest = 0;
+    int len = 255;
+    SQLWCHAR bff[len];
+    //ret = SQLBindCol(hstmt, 1, SQL_C_CHAR, buffer, len, &len);
+    ret = SQLBindCol(hstmt, 1, SQL_C_WCHAR, bff, len, &cbTest);
     printf("bind ret: %d\n", ret);
-    ret = 0;
-    int i = 0; 
-    while (i++ < 3) {
-        ret = SQLFetch(hstmt);
-        printf("ret: % d , id: %s\n", ret, buffer);
+    ret = SQLFetch(hstmt);
+    printf("ret: %d , id: %s\n", ret, bff);
         // if (ret == SQL_ERROR) {
         //     puts("err");
         //     break;
@@ -87,9 +85,7 @@ int main()
         //     puts("data end");
         //     break;
         // }
-    }
 
-    return EXIT_SUCCESS;
 err3:    
     SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
 err2:
