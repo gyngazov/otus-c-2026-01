@@ -7,7 +7,6 @@ struct SourceRow {
     int id;
     char code[CLEN];
     char val[VLEN];
-    int val_size;
 };
 
 struct Batch {
