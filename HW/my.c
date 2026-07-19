@@ -46,7 +46,7 @@ int main() {
     goto ex;
 
 err:
-    printf(err_text);
+    printf("%s ", err_text);
     printf("%s\n", mysql_error(conn));
     ret = EXIT_FAILURE;
 ex:
