@@ -113,7 +113,6 @@ void *reader(void *data)
     struct Batch *b;
     b = (struct Batch *) queue_pop(&q);
     while(b != NULL) {
-        printf("rsize: %d\n", b->size);
         insertp(conn, b);
         b = (struct Batch *) queue_pop(&q);
     }

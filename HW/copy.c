@@ -55,6 +55,7 @@ int insertp(PGconn *conn, struct Batch *batch)
             return -1;
         }
     }
+    free(batch);
     if (PQputCopyEnd(conn, NULL) != 1) {
         fprintf(stderr, "Failed to terminate COPY: %s\n", PQerrorMessage(conn));
         return -1;
