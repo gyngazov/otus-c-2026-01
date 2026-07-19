@@ -1,6 +1,6 @@
 TGT=que
 LFLAGS=-lpq
-CFLAGS=-Wall -Wextra -Wpedantic -std=c11 -Iinclude
+CFLAGS=-Wall -Wextra -Wpedantic -std=c11 -Iinclude -g
 
 OBJS=q1.o thsque.o copy.o
 

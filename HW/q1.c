@@ -5,7 +5,6 @@
 #include <string.h>
 
 #include "thsque.h"
-//#include "utils.h"
 #include "copy.h"
 
 ThreadSafeQueue q;
@@ -70,32 +69,40 @@ int rnd()
     return a + rand() % a;
 }
 
-int create_batch(const pthread_t pid, struct Batch *b)
+struct Batch create_batch(const pthread_t pid)
 {
-    b = (struct Batch *) malloc(sizeof(struct Batch));
-    b->size = rnd() % MAX_BATCH;
+    struct Batch b;
+    b.size = rnd() % MAX_BATCH;
     struct SourceRow sr;
-    for (int i = 0; i < b->size; i++) {
+    for (int i = 0; i < b.size; i++) {
         sr.id = rnd() * rnd();
         snprintf(sr.code, CLEN, "%ld", pid);
         snprintf(sr.val, VLEN, "%d", i);
-        b->rows[i] = sr;
+        b.rows[i] = sr;
     }
-    return 0;
+    return b;
 }
 
 void *writer(void *data)
 {
-    struct Batch batch;
-    int s;
+    struct Batch *b;
+    struct SourceRow *sr;
+    
     const pthread_t pid = pthread_self();
     for (int i = 0; i < rnd(); i++) {
-        create_batch(pid, &batch);
-        s = queue_push(&q, (void *)&batch);
-        if (s == -1)
-            exit(EXIT_FAILURE);
-        usleep(rnd() * rnd());
+        b = (struct Batch *) malloc(sizeof(struct Batch));
+        b->size = rnd() % MAX_BATCH;
+        for (int i = 0; i < b->size; i++) {
+            sr = (struct SourceRow *)malloc(sizeof(struct SourceRow));
+            sr->id = rnd() * rnd();
+            snprintf(sr->code, CLEN, "%ld", pid);
+            snprintf(sr->val, VLEN, "%d", i);
+            b->rows[i] = *sr;
+        }
+        queue_push(&q, (void *) b);
+        usleep(rnd() * rnd() / 2);
     }
+    printf("wsize: %d id: %d\n", b->size, b->rows[17].id);
     return NULL;
 }
 
@@ -103,11 +110,11 @@ void *reader(void *data)
 {
     PGconn *conn;
     conn = get_conn();
-    const pthread_t pid = pthread_self();
     struct Batch *b;
     b = (struct Batch *) queue_pop(&q);
     while(b != NULL) {
-        insert(conn, *b);
+        printf("rsize: %d\n", b->size);
+        insertp(conn, b);
         b = (struct Batch *) queue_pop(&q);
     }
     PQfinish(conn);

@@ -18,10 +18,10 @@ static void check_status(PGconn *conn, PGresult *res, ExecStatusType expected) {
     PQclear(res);
 }
 
-char buf[ROW_LEN];
 
 int insert(PGconn *conn, struct Batch batch) 
 {
+    char buf[ROW_LEN];
     struct SourceRow sr;
     for (int i = 0; i < batch.size; i++) {
         sr = batch.rows[i];
@@ -37,6 +37,30 @@ int insert(PGconn *conn, struct Batch batch)
     }
 
     PGresult *res = PQgetResult(conn);
+    check_status(conn, res, PGRES_COMMAND_OK);
+    return 0;
+}
+
+int insertp(PGconn *conn, struct Batch *batch) 
+{
+    char buf[ROW_LEN];
+    struct SourceRow sr;
+    PGresult *res = PQexec(conn, COPY);
+    check_status(conn, res, PGRES_COPY_IN);
+    for (int i = 0; i < batch->size; i++) {
+        sr = batch->rows[i];
+        snprintf(buf, ROW_LEN, PG_ROW, sr.id, sr.code, sr.val);
+        if (PQputCopyData(conn, buf, strlen(buf)) != 1) {
+            fprintf(stderr, "Failed to send row: %s error: %s\n", buf, PQerrorMessage(conn));
+            return -1;
+        }
+    }
+    if (PQputCopyEnd(conn, NULL) != 1) {
+        fprintf(stderr, "Failed to terminate COPY: %s\n", PQerrorMessage(conn));
+        return -1;
+    }
+
+    res = PQgetResult(conn);
     check_status(conn, res, PGRES_COMMAND_OK);
     return 0;
 }
@@ -83,9 +107,6 @@ PGconn *get_conn()
         PQfinish(conn);
         return NULL;
     }
-
-    PGresult *res = PQexec(conn, COPY);
-    check_status(conn, res, PGRES_COPY_IN);
     return conn;
 }
 
