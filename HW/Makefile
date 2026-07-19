@@ -1,8 +1,8 @@
 TGT=que
-LFLAGS=
+LFLAGS=-lpq
 CFLAGS=-Wall -Wextra -Wpedantic -std=c11 -Iinclude
 
-OBJS=q.o thsque.o
+OBJS=q1.o thsque.o copy.o
 
 %.o : %.c
 	gcc -c $(CFLAGS) $< -o $@
