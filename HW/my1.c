@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 #define SELECT "select id, code, val from barcodes where id between ? and ?"
 
 struct Range {
@@ -12,67 +13,69 @@ struct Range {
 };
 
 int main() {
-    MYSQL *conn;        // Дескриптор соединения
-    MYSQL_RES *res;      // Результат запроса
-    MYSQL_ROW row;       // Строка результата
-    char *err_text;
-    MYSQL_STMT *stmt;
-    MYSQL_BIND params_bind[2];
 
-    // Инициализируем дескриптор
+    MYSQL *conn;        
+    char *err_text = "";
+    int ret = EXIT_FAILURE;
+
     conn = mysql_init(NULL);
     if (conn == NULL) {
-        err_text = "Error: failed to create MySQL descriptor";
+        err_text = "НЕ создан дескриптор mysql";
         goto err;
     }
 
-    // Устанавливаем соединение с сервером
     if (!mysql_real_connect(conn, "10.0.59.96", "xtr", "123", "bark", 3306, NULL, 0)) {
-        err_text = "Error: failed to connect to database:";
+        err_text = "Ошибка подключения к бд";
         goto err;
     }
 
+    MYSQL_STMT *stmt;
     stmt = mysql_stmt_init(conn);
+    if (stmt == NULL) {
+        err_text = "НЕ создан дескриптор запроса";
+        goto err;
+    }
     if (mysql_stmt_prepare(stmt, SELECT, strlen(SELECT))) {
-        fprintf(stderr, "Ошибка подготовки: %s", mysql_stmt_error(stmt));
-        return 1;
+        err_text = "Ошибка подготовки запроса";
+        goto sterr;
     }
 
-    unsigned long length1[2];
-    bool          is_null1[2];
-    bool          error1[2];
+    MYSQL_BIND params_bind[2];
+    unsigned long lengthp[2];
+    bool is_nullp[2];
+    bool errorp[2];
     const long start = 10, last = 122;
+
     memset(params_bind, 0, sizeof(params_bind));
     params_bind[0].buffer_type = MYSQL_TYPE_LONG;
     params_bind[0].buffer = (char *) &start;
-    params_bind[0].is_null = &is_null1[0];
-    params_bind[0].length = &length1[0];
-    params_bind[0].error = &error1[0];
+    params_bind[0].is_null = &is_nullp[0];
+    params_bind[0].length = &lengthp[0];
+    params_bind[0].error = &errorp[0];
 
     params_bind[1].buffer_type = MYSQL_TYPE_LONG;
     params_bind[1].buffer = (char *) &last;
-    params_bind[1].is_null = &is_null1[1];
-    params_bind[1].length = &length1[1];
-    params_bind[1].error = &error1[1];
+    params_bind[1].is_null = &is_nullp[1];
+    params_bind[1].length = &lengthp[1];
+    params_bind[1].error = &errorp[1];
 
     if (mysql_stmt_bind_param(stmt, params_bind)) {
-        fprintf(stderr, "Ошибка привязки параметра: %s", mysql_stmt_error(stmt));
-        return 1;
+        err_text = "Ошибка привязки параметра";
+        goto sterr;
     } 
 
-    // Выполнение запроса
     if (mysql_stmt_execute(stmt)) {
-        fprintf(stderr, "Ошибка выполнения запроса: %s", mysql_stmt_error(stmt));
-        return 1;
+        err_text = "Ошибка выполнения запроса";
+        goto sterr;
     }
 
     MYSQL_BIND result_bind[3];
-    int           id_data;
-    char          code_data[150];
-    char          val_data[255];
+    int id_data;
+    char code_data[150];
+    char val_data[255];
     unsigned long length[3];
-    bool          is_null[3];
-    bool          error[3];
+    bool is_null[3];
+    bool error[3];
 
     memset(result_bind, 0, sizeof(result_bind));
 
@@ -82,7 +85,6 @@ int main() {
     result_bind[0].length = &length[0];
     result_bind[0].error = &error[0];
 
-/* STRING COLUMN */
     result_bind[1].buffer_type = MYSQL_TYPE_STRING;
     result_bind[1].buffer = (char *)code_data;
     result_bind[1].buffer_length = 150;
@@ -98,34 +100,31 @@ int main() {
     result_bind[2].error = &error[2];
 
     if (mysql_stmt_bind_result(stmt, result_bind)) {
-        fprintf(stderr, "Ошибка привязки результата: %s", mysql_stmt_error(stmt));
-        return 1;
+        err_text = "Ошибка привязки результата";
+        goto sterr;
     }
 
-    // Извлечение и вывод данных
-    int i = 11;
-    int ret;
-    while (i-- > 0) {
-        ret = mysql_stmt_fetch(stmt);
-        if (ret == 1 || ret == MYSQL_NO_DATA) {
-            printf("ret: %d\n", ret);
+
+    int rc;
+
+    while (1) {
+        rc = mysql_stmt_fetch(stmt);
+        if (rc == 1 || rc == MYSQL_NO_DATA)
             break;
-        }
         printf("%d %s %s\n", id_data, code_data, val_data);
     }
-        
-
-    mysql_stmt_free_result(stmt);
-    mysql_stmt_close(stmt);
 
     ret = EXIT_SUCCESS;
-    goto ex;
+sterr:
+    puts(mysql_stmt_error(stmt));
+    mysql_stmt_free_result(stmt);
+    mysql_stmt_close(stmt);
 
 err:
     puts(err_text);
     puts(mysql_error(conn));
-    ret = EXIT_FAILURE;
 ex:
-    mysql_close(conn);
+    if (conn != NULL)
+        mysql_close(conn);
     return ret;
 }

@@ -9,8 +9,3 @@ services:
       MYSQL_PASSWORD: 123
     ports:
       - "3306:3306"
-#    volumes:
-#      - /var/run/mysqld:/var/run/mysqld
-#      - /var/lib/mysql:/var/lib/mysql:rw
-#      #- ./data:/var/lib/mysql:rw # <- permissions
-#    user: root
