@@ -89,7 +89,7 @@ void *writer(void *data)
     struct SourceRow *sr;
     
     const pthread_t pid = pthread_self();
-    for (int i = 0; i < rnd(); i++) {
+    for (int k = 0; k < rnd(); k++) {
         b = (struct Batch *) malloc(sizeof(struct Batch));
         b->size = rnd() % MAX_BATCH;
         for (int i = 0; i < b->size; i++) {
@@ -105,17 +105,16 @@ void *writer(void *data)
     printf("wsize: %d id: %d\n", b->size, b->rows[17].id);
     return NULL;
 }
-
+// чтение очереди
 void *reader(void *data)
 {
     PGconn *conn;
     conn = get_conn();
-    struct Batch *b;
-    b = (struct Batch *) queue_pop(&q);
-    while(b != NULL) {
-        insertp(conn, b);
-        b = (struct Batch *) queue_pop(&q);
-    }
+    void *b;
+
+    while((b = queue_pop(&q)) != NULL)
+        insertp(conn, (struct Batch *) b);
+
     PQfinish(conn);
     return NULL;
 }

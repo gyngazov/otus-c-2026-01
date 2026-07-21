@@ -3,6 +3,11 @@
 #define MAX_BATCH   10000
 #define ROW_LEN     512
 
+struct Range {
+    int start;
+    int last;
+};
+
 struct SourceRow {
     int id;
     char code[CLEN];

@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <postgresql/libpq-fe.h>
+#include <libpq-fe.h>
 
 #include "utils.h"
 
 #define COPY    "COPY barcodes (id, code, val) FROM STDIN WITH (FORMAT text);"
+#define SELECT  "SELECT id, code, val FROM barcodes WHERE id BETWEEN $1 AND $2"
 #define PG_ROW  "%d\t%s\t%s\n"
 
 static void check_status(PGconn *conn, PGresult *res, ExecStatusType expected) {
@@ -65,38 +66,6 @@ int insertp(PGconn *conn, struct Batch *batch)
     check_status(conn, res, PGRES_COMMAND_OK);
     return 0;
 }
-
-
-// int main() {
-//     // 1. Establish database connection
-//     const char *conninfo = "dbname=testdb user=xtr password=123 host=localhost";
-//     PGconn *conn = PQconnectdb(conninfo);
-
-//     if (PQstatus(conn) != CONNECTION_OK) {
-//         fprintf(stderr, "Connection failed: %s\n", PQerrorMessage(conn));
-//         PQfinish(conn);
-//         return 1;
-//     }
-
-//     PGresult *res = PQexec(conn, COPY);
-//     check_status(conn, res, PGRES_COPY_IN);
-
-//     const struct SourceRow sr1 = {123, "w2e3", "u8y7"};
-//     const struct SourceRow sr2 = {12345, "w2kke3", "u8y7xx"};
-//     const struct SourceRow sr3 = {1234, "ffw2e3", "nnu8y7"};
-//     struct Batch b;
-//     b.size = 3;
-//     b.rows[0] = sr1;
-//     b.rows[1] = sr2;
-//     b.rows[2] = sr3;
-    
-//     insert(conn, b);
-
-//     printf("Bulk copy completed successfully.\n");
-
-//     PQfinish(conn);
-//     return 0;
-// }
 
 PGconn *get_conn()
 {
