@@ -80,3 +80,18 @@ PGconn *get_conn()
     return conn;
 }
 
+// чтение очереди
+void *reader(void *data)
+{
+    struct ThreadData *thd = (struct ThreadData *) data;
+    PGconn *conn;
+    conn = get_conn();
+    void *b;
+
+    while((b = queue_pop(thd->tsq)) != NULL)
+        insertp(conn, (struct Batch *) b);
+
+    PQfinish(conn);
+    return NULL;
+}
+
