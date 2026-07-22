@@ -1,8 +1,8 @@
 TGT=que
-LFLAGS=-lpq
-CFLAGS=-Wall -Wextra -Wpedantic -std=c11 -Iinclude -g
+LFLAGS=-lpq -L/usr/lib64/mysql -lmysqlclient -lz -lzstd -lssl -lcrypto -lresolv -lm
+CFLAGS=-Wall -Wextra -Wpedantic -std=c11 -Iinclude -I/usr/include/mysql -m64 -g
 
-OBJS=q1.o thsque.o copy.o
+OBJS=loader.o thsque.o copy.o ranger.o
 
 %.o : %.c
 	gcc -c $(CFLAGS) $< -o $@

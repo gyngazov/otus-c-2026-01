@@ -16,6 +16,17 @@ typedef struct {
     int size;
 } ThreadSafeQueue;
 
+// в поток
+/**
+ * диапазон id строк в источнике
+ * со start по last, включительно
+*/
+struct ThreadData {
+    int start; 
+    int last;
+    ThreadSafeQueue *tsq;
+};
+
 void queue_init(ThreadSafeQueue *q);
 void queue_destroy(ThreadSafeQueue *q);
 int queue_push(ThreadSafeQueue *q, void *data);

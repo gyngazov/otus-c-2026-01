@@ -9,69 +9,8 @@
 
 #define BATCH 123
 #define SELECT "select id, code, val from barcodes where id between ? and ?"
-/**
- * диапазон id строк в источнике
- * с и по, включительно
-*/
-struct ThreadData {
-    int start; 
-    int last;
-    ThreadSafeQueue *tsq;
-};
 
-void *writer(void *data) 
-{
-    struct ThreadData *thd = (struct ThreadData *) data;
-    MYSQL *conn;        
-    char *err_text = "";
-
-    conn = mysql_init(NULL);
-    if (conn == NULL) {
-        err_text = "НЕ создан дескриптор mysql";
-        goto nul;
-    }
-
-    if (!mysql_real_connect(conn, "10.0.59.96", "xtr", "123", "bark", 3306, NULL, 0)) {
-        err_text = "Ошибка подключения к бд";
-        goto err;
-    }
-
-    int begin = thd->start;
-    const int end = thd->last;
-    struct Batch *b;
-    while (begin <= end - BATCH) {
-        b = collect(conn, begin, begin + BATCH - 1);
-        if (b == NULL)
-            return NULL;
-        begin += BATCH;
-        queue_push(thd->tsq, (void *) b);
-    }
-    if (begin < end) {
-        b = collect(conn, begin, end);
-        if (b == NULL)
-            return NULL;
-        queue_push(thd->tsq, (void *) b);
-    }
-    
-err:
-    puts(mysql_error(conn));
-    mysql_close(conn);
-nul:
-    puts(err_text);
-    return NULL;
-}
-
-void view(struct Batch *b)
-{
-    struct SourceRow sr;
-    for(int i = 0; i < b->size; i++) {
-        sr = b->rows[i];
-        printf("%d %s %s\n", sr.id, sr.code, sr.val);
-    }
-    free(b);
-}
-
-struct Batch *collect(MYSQL *conn, const int start, const int last)
+static struct Batch *collect(MYSQL *conn, const int start, const int last)
 {
     char *err_text = "";
     MYSQL_STMT *stmt;
@@ -178,5 +117,48 @@ sterr:
 err:
     puts(err_text);
     puts(mysql_error(conn));
+    return NULL;
+}
+
+void *writer(void *data) 
+{
+    struct ThreadData *thd = (struct ThreadData *) data;
+    MYSQL *conn;        
+    char *err_text = "";
+
+    conn = mysql_init(NULL);
+    if (conn == NULL) {
+        err_text = "НЕ создан дескриптор mysql";
+        goto nul;
+    }
+
+    if (!mysql_real_connect(conn, "10.0.59.96", "xtr", "123", "bark", 3306, NULL, 0)) {
+        err_text = "Ошибка подключения к бд";
+        goto err;
+    }
+
+    int begin = thd->start;
+    const int end = thd->last;
+    struct Batch *b;
+    while (begin <= end - BATCH) {
+        b = collect(conn, begin, begin + BATCH - 1);
+        if (b == NULL)
+            return NULL;
+        begin += BATCH;
+        queue_push(thd->tsq, (void *) b);
+    }
+    if (begin < end) {
+        b = collect(conn, begin, end);
+        if (b == NULL)
+            return NULL;
+        queue_push(thd->tsq, (void *) b);
+    }
+    
+err:
+    puts(mysql_error(conn));
+    mysql_close(conn);
+nul:
+    puts(err_text);
+    free(thd);
     return NULL;
 }
