@@ -90,6 +90,8 @@ static struct Batch *collect(MYSQL *conn, const int start, const int last)
     int rc;
     struct Batch *b;
     b = (struct Batch *) malloc(sizeof(struct Batch));
+    if (b == NULL)
+        return NULL;
     struct SourceRow *sr;
     int i = 0;
 
@@ -98,6 +100,8 @@ static struct Batch *collect(MYSQL *conn, const int start, const int last)
         if (rc == 1 || rc == MYSQL_NO_DATA)
             break;
         sr = (struct SourceRow *)malloc(sizeof(struct SourceRow));
+        if (sr == NULL)
+            return NULL;
         sr->id = id_data;
         snprintf(sr->code, 150, "%s", code_data);
         snprintf(sr->val, 255, "%s", val_data);
@@ -119,7 +123,9 @@ err:
     puts(mysql_error(conn));
     return NULL;
 }
-
+/**
+ * Потоку писателю в очередь выдается диапазон id строк.
+ */
 void *writer(void *data) 
 {
     struct ThreadData *thd = (struct ThreadData *) data;

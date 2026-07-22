@@ -8,7 +8,7 @@
 
 #define COPY    "COPY barcodes (id, code, val) FROM STDIN WITH (FORMAT text);"
 #define PG_ROW  "%d\t%s\t%s\n"
-#define PG_CONN "dbname=testdb user=xtr password=123 host=localhost"
+#define PG_CONN "dbname=testdb user=root password=123 host=localhost"
 
 static void check_status(PGconn *conn, PGresult *res, ExecStatusType expected) {
     if (PQresultStatus(res) != expected) {
@@ -34,13 +34,13 @@ static int insertp(PGconn *conn, struct Batch *batch)
             return -1;
         }
     }
-    free(batch);
     if (PQputCopyEnd(conn, NULL) != 1) {
         fprintf(stderr, "Failed to terminate COPY: %s\n", PQerrorMessage(conn));
         return -1;
     }
 
     res = PQgetResult(conn);
+    free(batch);
     check_status(conn, res, PGRES_COMMAND_OK);
     return 0;
 }
@@ -50,17 +50,17 @@ void *reader(void *data)
 {
     struct ThreadData *thd = (struct ThreadData *) data;
     PGconn *conn = PQconnectdb(PG_CONN);
-
     if (PQstatus(conn) != CONNECTION_OK) {
         printf("Connection failed: %s\n", PQerrorMessage(conn));
-        //PQfinish(conn);
-        return NULL;
+        goto ex;
     }
+    
     void *b;
-
     while((b = queue_pop(thd->tsq)) != NULL)
-        insertp(conn, (struct Batch *) b);
+        if (insertp(conn, (struct Batch *) b) == -1)
+            break;
 
+ex:
     PQfinish(conn);
     free(thd);
     return NULL;

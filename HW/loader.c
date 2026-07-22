@@ -6,14 +6,31 @@
 #include "copy.h"
 #include "ranger.h"
 
-// MVP режим
+// демо
+//минимальный id в таблице источнике
 #define MIN             111
+//максимальный id в таблице источнике
 #define MAX             901
+// число потоков, читающих очередь
 #define QUEUE_READERS   2
+// число потоков, пишущих в очередь
 #define QUEUE_WRITERS   3
 
+/**
+ * Перенос строк одной таблицы между двумя серверами разных вендоров sql.
+ * Многопоточное чтение источника пачками.
+ * Получатель данных - postgresql.
+ * Запись на получателе с использованием COPY.
+ * Многопоточная запись.
+ * Буферизация пачек через потокобезопасный односвязный список.
+ * Все строки таблицы в источнике разбиваются на группы в количестве, равном числу потоков QUEUE_WRITERS
+ * Поток в своей группе еще разбивает ее на пачки.
+ * По каждой пачке делается запрос в источнике.
+ * Данные по пачке пушатся в очередь.
+ * Источник - mysql.
+ */
 
-int main (/* int argc, char **argv */)
+int main ()
 {
     ThreadSafeQueue q;
     queue_init(&q);
@@ -24,6 +41,8 @@ int main (/* int argc, char **argv */)
     // сначала читатели очереди
     for (int i = 0; i < QUEUE_READERS; i++) { 
         rthd = (struct ThreadData *) malloc(sizeof(struct ThreadData));
+        if (rthd == NULL)
+            exit(EXIT_FAILURE);
         rthd->start = 0;
         rthd->last = 0;
         rthd->tsq = &q;
@@ -40,6 +59,8 @@ int main (/* int argc, char **argv */)
     int k;
     for (int i = MIN; i <= MAX; i += thread_batch) {
         wthd = (struct ThreadData *) malloc(sizeof(struct ThreadData));
+        if (wthd == NULL)
+            exit(EXIT_FAILURE);
         wthd->tsq = &q;
         wthd->start = i;
         k = i +  thread_batch - 1;
