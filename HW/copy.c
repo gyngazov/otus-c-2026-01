@@ -28,9 +28,9 @@ static int insertp(PGconn *conn, struct Batch *batch)
     check_status(conn, res, PGRES_COPY_IN);
     for (int i = 0; i < batch->size; i++) {
         sr = batch->rows[i];
-        snprintf(buf, ROW_LEN, PG_ROW, sr.id, sr.code, sr.val) {
+        if (snprintf(buf, ROW_LEN, PG_ROW, sr.id, sr.code, sr.val) < 0) {
             puts("Ошибка копирования");
-            return NULL;
+            return -1;
         }
         if (PQputCopyData(conn, buf, strlen(buf)) != 1) {
             fprintf(stderr, "Failed to send row: %s error: %s\n", buf, PQerrorMessage(conn));

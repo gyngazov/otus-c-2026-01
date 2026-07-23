@@ -107,7 +107,7 @@ static struct Batch *collect(MYSQL *conn, const int start, const int last)
             puts("Ошибка копирования");
             return NULL;
         }
-        snprintf(sr->val, 255, "%s", val_data) {
+        if (snprintf(sr->val, 255, "%s", val_data) < 0) {
             puts("Ошибка копирования");
             return NULL;
         }
