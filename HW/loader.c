@@ -56,15 +56,17 @@ int main ()
     pthread_t wthrds[QUEUE_WRITERS];
     const int thread_batch = (MAX - MIN)/QUEUE_WRITERS;
     struct ThreadData *wthd;
-    int k;
-    for (int i = MIN; i <= MAX; i += thread_batch) {
+    
+    for (int i = 0; i < QUEUE_WRITERS; i++) {
         wthd = (struct ThreadData *) malloc(sizeof(struct ThreadData));
         if (wthd == NULL)
             exit(EXIT_FAILURE);
         wthd->tsq = &q;
-        wthd->start = i;
-        k = i +  thread_batch - 1;
-        wthd->last = MAX - k < thread_batch ? MAX : k; // добавить остаток от деления в посл. поток
+        wthd->start = MIN + i * thread_batch;
+        wthd->last = wthd->start + thread_batch - 1;
+        // добавить остаток от деления в посл. поток
+        if (i == QUEUE_WRITERS - 1)
+            wthd->last += MAX - wthd->last + 1;
         err = pthread_create(&wthrds[i], NULL, writer, (void *) wthd);
         if (err != 0) {
             perror("A new thread cannot be created");

@@ -134,16 +134,17 @@ err:
  */
 void *writer(void *data) 
 {
+    puts("in writer");
     struct ThreadData *thd = (struct ThreadData *) data;
     MYSQL *conn;        
     char *err_text = "";
-
+puts("afer thread");
     conn = mysql_init(NULL);
     if (conn == NULL) {
         err_text = "НЕ создан дескриптор mysql";
         goto nul;
     }
-
+    puts("afer conn");
     if (!mysql_real_connect(conn, "10.0.59.96", "xtr", "123", "bark", 3306, NULL, 0)) {
         err_text = "Ошибка подключения к бд";
         goto err;
