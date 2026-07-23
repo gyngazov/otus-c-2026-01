@@ -103,8 +103,14 @@ static struct Batch *collect(MYSQL *conn, const int start, const int last)
         if (sr == NULL)
             return NULL;
         sr->id = id_data;
-        snprintf(sr->code, 150, "%s", code_data);
-        snprintf(sr->val, 255, "%s", val_data);
+        if (snprintf(sr->code, 150, "%s", code_data) < 0) {
+            puts("Ошибка копирования");
+            return NULL;
+        }
+        snprintf(sr->val, 255, "%s", val_data) {
+            puts("Ошибка копирования");
+            return NULL;
+        }
         b->rows[i] = *sr;
         i++;
     }
