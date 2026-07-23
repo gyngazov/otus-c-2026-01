@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <time.h>
 
 #include "thsque.h"
 #include "copy.h"
@@ -12,9 +13,9 @@
 //максимальный id в таблице источнике
 #define MAX             901
 // число потоков, читающих очередь
-#define QUEUE_READERS   2
+#define QUEUE_READERS   7
 // число потоков, пишущих в очередь
-#define QUEUE_WRITERS   3
+#define QUEUE_WRITERS   2
 
 /**
  * Перенос строк одной таблицы между двумя серверами разных вендоров sql.
@@ -35,6 +36,11 @@ int main ()
     ThreadSafeQueue q;
     queue_init(&q);
     int err;
+    struct timespec start, end;
+
+    // Замеряем начало
+    clock_gettime(CLOCK_REALTIME, &start);
+    
  
     pthread_t rthrds[QUEUE_READERS];
     struct ThreadData *rthd;
@@ -54,7 +60,7 @@ int main ()
     }
 
     pthread_t wthrds[QUEUE_WRITERS];
-    const int thread_batch = (MAX - MIN)/QUEUE_WRITERS;
+    const int thread_batch = (MAX - MIN + 1)/QUEUE_WRITERS;
     struct ThreadData *wthd;
     
     for (int i = 0; i < QUEUE_WRITERS; i++) {
@@ -95,9 +101,17 @@ int main ()
         else if ((int*)res == PTHREAD_CANCELED)
             printf("Поток отменен");
     }   
+    clock_gettime(CLOCK_REALTIME, &end);
+
+    // Вычисляем разницу в наносекундах
+    long long elapsed_ns = (end.tv_sec - start.tv_sec) * 1000000000LL + (end.tv_nsec - start.tv_nsec);
+
+    printf("Писателей в очередь: %d\nЧитателей из очереди: %d\n", QUEUE_WRITERS, QUEUE_READERS);
+    printf("Время работы: %lld нс\n", elapsed_ns);
+    double speed = (double) (MAX - MIN + 1) / elapsed_ns * 1000000000LL;
+    printf("Скорость: %.2f стр/сек\n", speed);
 
     queue_destroy(&q);
-
     return EXIT_SUCCESS;
 }
 

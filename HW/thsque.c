@@ -50,6 +50,7 @@ int queue_push(ThreadSafeQueue *q, void *data) {
 
     pthread_cond_signal(&q->cond); 
     pthread_mutex_unlock(&q->mutex);
+    printf("qlen+: %d\n", q->size);
     return q->size;
 }
 void* queue_pop(ThreadSafeQueue *q) {
@@ -73,6 +74,7 @@ void* queue_pop(ThreadSafeQueue *q) {
     free(temp);
     q->size -= 1;
     pthread_mutex_unlock(&q->mutex);
+    printf("qlen-: %d\n", q->size);
     return data;
 }
 void queue_shutdown(ThreadSafeQueue *q) {
