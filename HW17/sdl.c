@@ -18,20 +18,24 @@ int init() {
     }
     puts("1");
     
-    gWindow = SDL_CreateWindow("Tic Tac Toe", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREENWIDTH, SCREENHEIGHT, SDL_WINDOW_SHOWN);
-    if (gWindow == NULL) {
-        printf("Window could not be created! SDL_Error: %s", SDL_GetError());
-        exit(1);
-    }
-    puts("2");
-    
-    // gRenderer = SDL_CreateRenderer(gWindow, -1, 0);
+    int rt = SDL_CreateWindowAndRenderer(SCREENWIDTH, SCREENHEIGHT
+        , SDL_WINDOW_SHOWN, &gWindow, &gRenderer);
+    printf("rt %d\n", rt);
+    // gWindow = SDL_CreateWindow("Tic Tac Toe", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED
+    //     , SCREENWIDTH, SCREENHEIGHT, SDL_WINDOW_SHOWN);
+    // if (gWindow == NULL) {
+    //     printf("Window could not be created! SDL_Error: %s", SDL_GetError());
+    //     exit(1);
+    // }
+    // puts("2");
+    // printf("num %d\n", SDL_GetNumRenderDrivers());
+    // gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_PRESENTVSYNC);
     // if (gRenderer == NULL) {
     //     printf("Renderer could not be created! SDL_Error: %s", SDL_GetError());
     //     exit(1);
     // }
-    // puts("3");
-    // SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+    puts("3");
+    SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
     puts("4");
 }
 
