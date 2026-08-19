@@ -1,0 +1,21 @@
+services:
+  mysql:
+    image: mysql
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 123
+      MYSQL_DATABASE: bark
+      MYSQL_USER: xtr
+      MYSQL_PASSWORD: 123
+    ports:
+      - "3306:3306"
+
+  pgdb:
+    image: postgres
+    container_name: pgdb
+    ports:
+    - "5432:5432"
+    environment:
+    - POSTGRES_DB=testdb
+    - POSTGRES_USER=root
+    - POSTGRES_PASSWORD=123
