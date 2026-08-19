@@ -19,7 +19,7 @@ int rnd(int mod);
  * Повторить.
  */
 
-int main(int argc, char* argv) {
+int main() {
     
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
         fprintf(stderr, "Ошибка инициализации SDL: %s", SDL_GetError());
@@ -62,12 +62,13 @@ int main(int argc, char* argv) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT)
                 running = 0;
-            else if (event.type == SDL_KEYDOWN)
+            else if (event.type == SDL_KEYDOWN) {
                 move(&event, &x, &y);
                 if (x > a && x + SMALL < a + LARGE && y > b && y + SMALL < b + LARGE) {
                     a = rnd(WIDTH - LARGE);
                     b = rnd(HIGHT - LARGE);
                 }
+            }
         }
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
