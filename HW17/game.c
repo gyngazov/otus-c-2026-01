@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <SDL2/SDL.h>
 #include <stdlib.h>
+#include <time.h>
 
 #define DELAY 17
 #define WIDTH 800
@@ -9,6 +10,14 @@
 #define LARGE 70
 
 void move(SDL_Event *e, int *x, int *y);
+int rnd(int mod);
+
+/**
+ * Игра-тренажер 3+.
+ * Квадрат в квадрате.
+ * Поместить малый белый квадрат внутрь большого черного.
+ * Повторить.
+ */
 
 int main(int argc, char* argv) {
     
@@ -40,9 +49,14 @@ int main(int argc, char* argv) {
         return EXIT_FAILURE;
     }
 
+    srand(time(NULL));
+    
     int running = 1;
     SDL_Event event;
-    int x = 100, y = 100;
+    int x = rnd(WIDTH - SMALL);
+    int y = rnd(HIGHT - SMALL);
+    int a = rnd(WIDTH - LARGE); 
+    int b = rnd(HIGHT - LARGE);
 
     while (running) {
         while (SDL_PollEvent(&event)) {
@@ -50,13 +64,17 @@ int main(int argc, char* argv) {
                 running = 0;
             else if (event.type == SDL_KEYDOWN)
                 move(&event, &x, &y);
+                if (x > a && x + SMALL < a + LARGE && y > b && y + SMALL < b + LARGE) {
+                    a = rnd(WIDTH - LARGE);
+                    b = rnd(HIGHT - LARGE);
+                }
         }
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
         SDL_RenderClear(renderer);
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-        SDL_Rect big = {333, 444, LARGE, LARGE};
+        SDL_Rect big = {a, b, LARGE, LARGE};
         SDL_RenderFillRect(renderer, &big);
 
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
@@ -92,4 +110,9 @@ void move(SDL_Event *e, int *x, int *y)
         default:
             break;    
     }
+}
+
+int rnd(int mod)
+{
+    return rand() % mod;
 }
